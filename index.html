@@ -1,2114 +1,1129 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cifras y Letras - Duelo contra Gemini</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
-    <style>
-        html, body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top center, #1e3a8a 0%, #0f172a 55%, #060b19 100%);
-            height: 100dvh;
-            max-height: 100dvh;
-            color: #f8fafc;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
-            touch-action: manipulation;
-        }
-        .font-mono-num {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .studio-glow {
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-        }
-        .gold-glow {
-            box-shadow: 0 0 18px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Cifras y Letras - Duelo IA</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #273549;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --selected-bg: #f59e0b;
+      --selected-border: #fde68a;
+      --selected-text: #111827;
+      --ok: #22c55e;
+      --danger: #ef4444;
+      --border: #334155;
+    }
 
-        /* Ficha disponible (blanca brillante estilo plató) */
-        .tile-card {
-            background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%);
-            color: #0f172a;
-            border: 2px solid #cbd5e1;
-            box-shadow: 0 3px 0 #94a3b8, 0 5px 10px -2px rgba(0, 0, 0, 0.45);
-            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, border-color 0.15s ease;
-            user-select: none;
-            position: relative;
-        }
-        .tile-card:active:not(:disabled) {
-            transform: translateY(2px);
-            box-shadow: 0 1px 0 #94a3b8;
-        }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* Ficha marcada/usada en Letras: cambio de color muy evidente (ámbar/naranja intenso) */
-        .tile-marked-letter {
-            background: linear-gradient(145deg, #fb923c 0%, #ea580c 100%) !important;
-            color: #ffffff !important;
-            border: 2px solid #fef08a !important;
-            box-shadow: 0 2px 0 #9a3412, 0 0 14px rgba(249, 115, 22, 0.65) !important;
-            transform: translateY(1px);
-            cursor: pointer;
-        }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100dvh;
+      background: radial-gradient(circle at top, #1e293b 0%, var(--bg) 65%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
 
-        /* Ficha ya consumida en una operación de Cifras */
-        .tile-used-number {
-            background: linear-gradient(145deg, #334155 0%, #1e293b 100%) !important;
-            color: #64748b !important;
-            border: 2px dashed #475569 !important;
-            box-shadow: none !important;
-            transform: translateY(2px);
-            cursor: not-allowed;
-        }
+    .app {
+      max-width: 780px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding: 10px 12px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-        /* Ficha seleccionada actualmente en Cifras */
-        .tile-selected {
-            background: linear-gradient(145deg, #facc15 0%, #f59e0b 100%) !important;
-            color: #0f172a !important;
-            border: 2px solid #ffffff !important;
-            box-shadow: 0 3px 0 #b45309, 0 0 16px rgba(250, 204, 21, 0.8) !important;
-            transform: translateY(-2px);
-        }
+    header.topbar {
+      background: rgba(30, 41, 59, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
 
-        /* Ficha resultado generada en Cifras */
-        .tile-computed {
-            background: linear-gradient(145deg, #38bdf8 0%, #0284c7 100%);
-            color: #ffffff;
-            border: 2px solid #bae6fd;
-            box-shadow: 0 3px 0 #0369a1, 0 5px 10px -2px rgba(0, 0, 0, 0.45);
-        }
+    .brand {
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.88); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .animate-pop {
-            animation: popIn 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        .timer-bar {
-            transition: width 0.25s linear, background-color 0.3s ease;
-        }
-        .thin-scroll::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        .thin-scroll::-webkit-scrollbar-thumb {
-            background: rgba(148, 163, 184, 0.4);
-            border-radius: 9999px;
-        }
-    </style>
+    .scores {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .score-pill {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    .score-pill.you span { color: var(--accent); }
+    .score-pill.ai span { color: #c084fc; }
+
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .timer-badge {
+      background: #0b1220;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 0.92rem;
+      padding: 5px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .timer-badge.danger {
+      border-color: var(--danger);
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.16);
+    }
+
+    .mode-toggle {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: 11px;
+      font-weight: 700;
+      transition: transform 0.08s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    button:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #062033;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+    }
+
+    .btn-secondary {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      font-size: 0.88rem;
+    }
+
+    .btn-success {
+      background: var(--ok);
+      color: #052e16;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+    }
+
+    .btn-warn {
+      background: var(--selected-bg);
+      color: var(--selected-text);
+      padding: 8px 12px;
+      font-size: 0.86rem;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    /* Fichas de Letras */
+    .tiles-row {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .letter-tile {
+      position: relative;
+      background: #e2e8f0;
+      color: #0f172a;
+      border: 2px solid #94a3b8;
+      border-radius: 10px;
+      min-height: 46px;
+      font-size: 1.25rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .letter-tile.used {
+      background: var(--selected-bg);
+      color: var(--selected-text);
+      border-color: var(--selected-border);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .order-tag {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 0.65rem;
+      font-weight: 900;
+      line-height: 1;
+      padding: 1px 4px;
+      border-radius: 999px;
+      background: #111827;
+      color: #fde68a;
+    }
+
+    .word-preview {
+      background: #0b1220;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .key-btn {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 2px;
+      font-size: 0.9rem;
+    }
+
+    .key-btn.available {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.14);
+    }
+
+    .key-btn.marked {
+      background: var(--selected-bg);
+      color: var(--selected-text);
+      border-color: var(--selected-border);
+    }
+
+    /* Fichas de Cifras */
+    .target-box {
+      background: #0b1220;
+      border: 2px solid var(--accent);
+      border-radius: 14px;
+      padding: 10px 14px;
+      text-align: center;
+    }
+
+    .target-num {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+
+    .num-tiles {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .num-tile {
+      position: relative;
+      background: #e2e8f0;
+      color: #0f172a;
+      border: 2px solid #94a3b8;
+      border-radius: 11px;
+      min-height: 48px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .num-tile.used {
+      background: var(--selected-bg);
+      color: var(--selected-text);
+      border-color: var(--selected-border);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .ops-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .op-btn {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 4px;
+      font-size: 1rem;
+    }
+
+    .expr-box {
+      background: #0b1220;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .chips-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .result-box {
+      background: #0b1220;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        padding: 8px 8px 34px;
+        gap: 8px;
+      }
+      .card {
+        padding: 10px;
+        gap: 8px;
+      }
+      .tiles-row {
+        gap: 4px;
+      }
+      .letter-tile {
+        min-height: 40px;
+        font-size: 1.05rem;
+        border-radius: 8px;
+      }
+      .keyboard {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 4px;
+      }
+      .key-btn {
+        padding: 7px 2px;
+        font-size: 0.84rem;
+      }
+      .num-tiles {
+        gap: 5px;
+      }
+      .num-tile {
+        min-height: 42px;
+        font-size: 1.05rem;
+      }
+      .target-num {
+        font-size: 1.65rem;
+      }
+      button.btn-primary,
+      button.btn-success,
+      button.btn-secondary {
+        padding: 9px 10px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
-<body class="flex flex-col justify-between">
-
-    <!-- CABECERA COMPACTA -->
-    <header class="w-full shrink-0 border-b border-blue-800/60 bg-slate-950/85 backdrop-blur-md z-30">
-        <div class="max-w-5xl mx-auto px-2.5 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5">
-            <!-- Logo y Ronda -->
-            <div class="flex items-center gap-1.5">
-                <div class="flex items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-600 px-2 py-1 rounded-lg border border-blue-400/30 shadow">
-                    <span class="font-black tracking-wide text-white text-xs sm:text-sm">CIFRAS</span>
-                    <span class="text-amber-400 font-black text-xs sm:text-sm">&amp;</span>
-                    <span class="font-black tracking-wide text-white text-xs sm:text-sm">LETRAS</span>
-                </div>
-                <div id="roundBadge" class="hidden bg-slate-800/90 border border-slate-700 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-bold text-blue-200">
-                    R<span id="currentRoundNum" class="text-amber-400">1</span>/<span id="totalRoundsNum">10</span>
-                </div>
-            </div>
-
-            <!-- Marcador Central -->
-            <div id="scoreboard" class="hidden flex items-center gap-2 sm:gap-4 bg-slate-900/95 border border-blue-700/50 px-2.5 sm:px-4 py-0.5 sm:py-1 rounded-xl">
-                <div class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span class="text-[11px] sm:text-xs font-bold text-slate-300 uppercase">Tú</span>
-                    <span id="playerScore" class="font-mono-num text-base sm:text-xl font-black text-white">0</span>
-                </div>
-                <div class="text-slate-600 font-black text-[10px] sm:text-xs">VS</div>
-                <div class="flex items-center gap-1.5">
-                    <span id="aiScore" class="font-mono-num text-base sm:text-xl font-black text-amber-400">0</span>
-                    <span class="text-[11px] sm:text-xs font-bold text-amber-300 uppercase">IA</span>
-                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                </div>
-            </div>
-
-            <!-- Selector de Tiempo (45s / Infinito) y Salir -->
-            <div class="flex items-center gap-1.5">
-                <div class="flex items-center bg-slate-900 border border-blue-700/60 rounded-lg p-0.5" title="Elige jugar con 45 segundos o sin tiempo (Infinito)">
-                    <button type="button" id="hdrTime45Btn" onclick="setTimerMode(true)" class="px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold transition bg-amber-500 text-slate-950 shadow">
-                        ⏱️ 45s
-                    </button>
-                    <button type="button" id="hdrTimeInfBtn" onclick="setTimerMode(false)" class="px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold transition text-slate-300 hover:text-white">
-                        ♾️ Infinito
-                    </button>
-                </div>
-                <button id="restartBtn" onclick="confirmResetModal()" class="hidden px-2 py-1 rounded-lg bg-rose-950/90 hover:bg-rose-900 border border-rose-700/60 text-[11px] sm:text-xs font-semibold text-rose-200 transition">
-                    Salir
-                </button>
-            </div>
-        </div>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">🎯 Cifras y Letras</div>
+      <div class="scores">
+        <div class="score-pill you">Tú: <span id="scoreYou">0</span></div>
+        <div class="score-pill ai">IA: <span id="scoreAi">0</span></div>
+      </div>
+      <div class="timer-box">
+        <div id="timerBadge" class="timer-badge" title="Doble toque para cambiar entre 45s y Sin tiempo">⏱️ 45s</div>
+        <button id="toggleTimeModeBtn" class="mode-toggle" type="button">Modo: 45s</button>
+      </div>
     </header>
 
-    <!-- CONTENEDOR PRINCIPAL SIN SCROLL -->
-    <main class="flex-1 min-h-0 max-w-5xl w-full mx-auto px-2 sm:px-4 py-1.5 sm:py-2.5 flex flex-col justify-center overflow-hidden">
-
-        <!-- NOTIFICACIÓN FLOTANTE (Sin alert()) -->
-        <div id="toastBanner" class="fixed top-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-200 transform -translate-y-2 w-[92%] max-w-md">
-            <div id="toastContent" class="bg-slate-900/95 border border-amber-400/70 text-white px-3.5 py-2 rounded-xl shadow-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 text-center">
-                <span id="toastEmoji">💡</span>
-                <span id="toastText">Mensaje</span>
-            </div>
+    <!-- MENÚ PRINCIPAL -->
+    <section id="menuView" class="card">
+      <div class="row">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:1.15rem;">Elige prueba para jugar contra la IA</h2>
+          <div class="muted">45 segundos en ambas pruebas o modo sin tiempo (∞). Al marcar fichas cambian de color y muestran su orden.</div>
         </div>
+        <button id="resetScoreBtn" class="btn-secondary" type="button">Reiniciar marcador</button>
+      </div>
 
-        <!-- PANTALLA 1: MENÚ DE INICIO COMPACTO -->
-        <section id="startScreen" class="studio-glow bg-slate-900/85 backdrop-blur-md border border-blue-700/40 rounded-2xl sm:rounded-3xl p-4 sm:p-7 text-center max-w-3xl mx-auto w-full my-auto animate-pop flex flex-col justify-center">
-            <div class="inline-block mx-auto px-3 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1.5">
-                Edición Duelo Interactivo
-            </div>
-            <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight mb-1">
-                Cifras <span class="text-amber-400">&amp;</span> Letras
-            </h1>
-            <p class="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto mb-3 sm:mb-5 leading-snug">
-                Juega contra <strong class="text-amber-300">Gemini</strong>. Envía varias palabras o cálculos por ronda y elige si prefieres jugar a <strong class="text-amber-300">45 segundos</strong> o en <strong class="text-blue-300">modo Infinito</strong>.
-            </p>
+      <div class="menu-grid">
+        <button id="startLettersBtn" class="btn-primary" type="button">🔤 Ronda de Letras</button>
+        <button id="startNumbersBtn" class="btn-success" type="button">🔢 Ronda de Cifras</button>
+      </div>
 
-            <!-- Ajustes previos: Dificultad IA y Modo de Tiempo -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 mb-4 sm:mb-6 max-w-xl mx-auto w-full">
-                <!-- Dificultad IA -->
-                <div>
-                    <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-blue-300 mb-1">Nivel de Gemini (Rival)</label>
-                    <div class="grid grid-cols-3 gap-1 bg-slate-950/85 p-1 rounded-xl border border-slate-800">
-                        <button type="button" onclick="setDifficulty('amateur')" id="diff-amateur" class="diff-btn py-1.5 px-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
-                            Fácil
-                        </button>
-                        <button type="button" onclick="setDifficulty('pro')" id="diff-pro" class="diff-btn py-1.5 px-2 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow">
-                            Medio
-                        </button>
-                        <button type="button" onclick="setDifficulty('genius')" id="diff-genius" class="diff-btn py-1.5 px-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
-                            Experto
-                        </button>
-                    </div>
-                </div>
+      <div class="row">
+        <span class="muted">Tiempo actual: <strong id="menuTimeLabel">45 segundos</strong></span>
+        <button id="menuSwitchTimeBtn" class="btn-secondary" type="button">Cambiar a Sin tiempo (∞)</button>
+      </div>
+    </section>
 
-                <!-- Modalidad de Tiempo -->
-                <div>
-                    <label class="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-300 mb-1">Reloj de Prueba</label>
-                    <div class="grid grid-cols-2 gap-1 bg-slate-950/85 p-1 rounded-xl border border-slate-800">
-                        <button type="button" onclick="setTimerMode(true)" id="menuTime45Btn" class="py-1.5 px-2 rounded-lg text-xs font-extrabold transition bg-amber-500 text-slate-950 shadow">
-                            ⏱️ Con tiempo (45s)
-                        </button>
-                        <button type="button" onclick="setTimerMode(false)" id="menuTimeInfBtn" class="py-1.5 px-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
-                            ♾️ Sin tiempo (∞)
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modos de Juego -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 text-left">
-                <button onclick="startGame('full')" class="group bg-gradient-to-br from-blue-900/90 to-slate-900 hover:from-blue-800 hover:to-slate-800 border-2 border-amber-400/60 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all shadow-lg flex sm:flex-col items-center sm:items-start justify-between gap-2">
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-lg sm:text-2xl">🏆</span>
-                            <h3 class="text-sm sm:text-base font-extrabold text-white group-hover:text-amber-300">Partida Completa</h3>
-                        </div>
-                        <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-tight">10 rondas alternando Cifras y Letras.</p>
-                    </div>
-                    <span class="shrink-0 text-[11px] sm:text-xs font-bold text-amber-400 sm:mt-2">10 rondas →</span>
-                </button>
-
-                <button onclick="startGame('cifras')" class="group bg-slate-900/90 hover:bg-slate-800 border border-blue-700/50 hover:border-blue-400 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all shadow flex sm:flex-col items-center sm:items-start justify-between gap-2">
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-lg sm:text-2xl">🔢</span>
-                            <h3 class="text-sm sm:text-base font-extrabold text-white group-hover:text-blue-300">Solo Cifras</h3>
-                        </div>
-                        <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-tight">5 rondas rápidas de cálculo mental.</p>
-                    </div>
-                    <span class="shrink-0 text-[11px] sm:text-xs font-bold text-blue-400 sm:mt-2">5 rondas →</span>
-                </button>
-
-                <button onclick="startGame('letras')" class="group bg-slate-900/90 hover:bg-slate-800 border border-blue-700/50 hover:border-blue-400 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all shadow flex sm:flex-col items-center sm:items-start justify-between gap-2">
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-lg sm:text-2xl">🔤</span>
-                            <h3 class="text-sm sm:text-base font-extrabold text-white group-hover:text-emerald-300">Solo Letras</h3>
-                        </div>
-                        <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-tight">5 rondas buscando palabras largas.</p>
-                    </div>
-                    <span class="shrink-0 text-[11px] sm:text-xs font-bold text-emerald-400 sm:mt-2">5 rondas →</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- PANTALLA 2: PRUEBA DE CIFRAS -->
-        <section id="cifrasScreen" class="hidden h-full flex flex-col justify-center animate-pop">
-            <div class="studio-glow bg-slate-900/90 border border-blue-700/50 rounded-2xl sm:rounded-3xl p-2.5 sm:p-5 flex flex-col justify-between max-h-full gap-2 sm:gap-3">
-                <!-- Cabecera de prueba -->
-                <div class="flex items-center justify-between gap-2">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-400 block leading-none">Cálculo</span>
-                        <h2 class="text-sm sm:text-xl font-black text-white leading-tight">Cifras</h2>
-                    </div>
-
-                    <!-- Objetivo de 3 cifras -->
-                    <div class="flex items-center gap-2 bg-slate-950 border-2 border-amber-400 rounded-xl px-3 sm:px-5 py-1 sm:py-1.5 gold-glow">
-                        <span class="text-[10px] sm:text-xs font-bold uppercase text-amber-300">Objetivo</span>
-                        <span id="cifrasTarget" class="font-mono-num text-xl sm:text-3xl font-black text-white">---</span>
-                    </div>
-
-                    <!-- Reloj con doble toque para alternar 45s / Infinito -->
-                    <button type="button" id="cifrasTimerBox" title="Doble toque para alternar 45s / Infinito" class="flex items-center gap-1.5 bg-slate-950/95 hover:bg-slate-900 border border-amber-400/50 px-2.5 sm:px-3 py-1 rounded-xl cursor-pointer transition">
-                        <span id="cifrasTimerIcon" class="text-xs sm:text-base">⏱️</span>
-                        <span id="cifrasTimerText" class="font-mono-num text-base sm:text-xl font-black text-amber-400">45s</span>
-                    </button>
-                </div>
-
-                <!-- Barra de tiempo -->
-                <div id="cifrasProgressContainer" class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden shrink-0">
-                    <div id="cifrasProgressBar" class="timer-bar h-full bg-amber-400 w-full"></div>
-                </div>
-
-                <!-- Paso previo: Elección de reparto de fichas -->
-                <div id="cifrasSetupPanel" class="bg-slate-950/75 border border-blue-800/50 rounded-xl p-3 sm:p-5 text-center space-y-3 my-auto">
-                    <p class="text-xs sm:text-sm text-slate-200 font-medium">¿Cuántos <strong class="text-amber-300">números grandes</strong> (25, 50, 75, 100) quieres?</p>
-                    <div class="grid grid-cols-3 sm:flex sm:flex-wrap justify-center gap-1.5 sm:gap-2.5">
-                        <button onclick="dealCifras(0)" class="py-2 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 font-bold text-xs sm:text-sm transition">0 Grandes</button>
-                        <button onclick="dealCifras(1)" class="py-2 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 font-bold text-xs sm:text-sm transition">1 Grande</button>
-                        <button onclick="dealCifras(2)" class="py-2 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 font-bold text-xs sm:text-sm transition">2 Grandes</button>
-                        <button onclick="dealCifras(3)" class="py-2 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 font-bold text-xs sm:text-sm transition">3 Grandes</button>
-                        <button onclick="dealCifras(4)" class="py-2 px-3 rounded-xl bg-blue-700 hover:bg-blue-600 font-bold text-xs sm:text-sm transition">4 Grandes</button>
-                        <button onclick="dealCifras(-1)" class="py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm transition">🎲 Azar</button>
-                    </div>
-                </div>
-
-                <!-- Zona de Juego Activa de Cifras -->
-                <div id="cifrasPlayPanel" class="hidden flex-1 min-h-0 flex flex-col justify-between gap-2">
-                    <!-- Fichas de Números Disponibles -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-[10px] sm:text-xs font-bold uppercase text-slate-400">Fichas (número → operador → número)</span>
-                            <span class="text-[11px] sm:text-xs text-blue-300">Mejor: <strong id="cifrasBestSoFar" class="text-amber-400 font-mono-num">Ninguno</strong></span>
-                        </div>
-                        <div id="cifrasTilesContainer" class="grid grid-cols-6 gap-1.5 sm:gap-2.5">
-                            <!-- Se rellena dinámicamente -->
-                        </div>
-                    </div>
-
-                    <!-- Operadores Matemáticos y Controles -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-stretch">
-                        <!-- Panel de Operadores -->
-                        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-2 sm:p-3 flex flex-col justify-between gap-1.5">
-                            <div class="grid grid-cols-4 gap-1.5">
-                                <button onclick="selectOperator('+')" id="op-+" class="op-btn py-1.5 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-500 font-mono-num text-lg sm:text-xl font-black text-white shadow transition">+</button>
-                                <button onclick="selectOperator('-')" id="op--" class="op-btn py-1.5 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-500 font-mono-num text-lg sm:text-xl font-black text-white shadow transition">−</button>
-                                <button onclick="selectOperator('*')" id="op-*" class="op-btn py-1.5 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-500 font-mono-num text-lg sm:text-xl font-black text-white shadow transition">×</button>
-                                <button onclick="selectOperator('/')" id="op-/" class="op-btn py-1.5 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-500 font-mono-num text-lg sm:text-xl font-black text-white shadow transition">÷</button>
-                            </div>
-                            <div class="flex gap-1.5">
-                                <button onclick="undoCifrasStep()" class="flex-1 py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] sm:text-xs font-bold text-slate-200 border border-slate-600 transition">
-                                    ↩ Deshacer
-                                </button>
-                                <button onclick="resetCifrasBoard()" class="flex-1 py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] sm:text-xs font-bold text-slate-200 border border-slate-600 transition">
-                                    🗑️ Limpiar
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Pizarra de pasos actuales -->
-                        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-2 sm:p-3 flex flex-col justify-between min-h-[72px] max-h-[100px] overflow-y-auto thin-scroll">
-                            <ul id="cifrasStepsList" class="space-y-1 font-mono-num text-xs text-blue-200">
-                                <li class="text-slate-500 italic font-sans text-[11px]">Pulsa una ficha para calcular...</li>
-                            </ul>
-                            <div id="currentExpressionPreview" class="font-mono-num text-amber-300 font-bold text-xs min-h-[16px]"></div>
-                        </div>
-                    </div>
-
-                    <!-- Historial Compacto de Aproximaciones Guardadas en esta Ronda -->
-                    <div class="bg-slate-950/90 border border-blue-800/40 rounded-xl px-2.5 py-1.5">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-300">Tus aproximaciones enviadas (<span id="cifrasAttemptsCount">0</span>)</span>
-                            <span class="text-[10px] text-slate-400">Compite tu mejor marca</span>
-                        </div>
-                        <div id="cifrasAttemptsList" class="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-0.5 min-h-[26px]">
-                            <span class="text-[11px] text-slate-500 italic">Aún no has guardado ningún cálculo...</span>
-                        </div>
-                    </div>
-
-                    <!-- Botones de Acción -->
-                    <div class="grid grid-cols-2 gap-2 pt-0.5">
-                        <button onclick="saveCifrasAttempt()" class="py-2 sm:py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs sm:text-sm shadow transition flex items-center justify-center gap-1.5 border border-blue-400/30">
-                            <span>💾</span>
-                            <span>Guardar cálculo</span>
-                        </button>
-                        <button onclick="finishCifrasRound()" class="py-2 sm:py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm shadow transition flex items-center justify-center gap-1.5">
-                            <span>🏁</span>
-                            <span>Finalizar ronda</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- PANTALLA 3: PRUEBA DE LETRAS -->
-        <section id="letrasScreen" class="hidden h-full flex flex-col justify-center animate-pop">
-            <div class="studio-glow bg-slate-900/90 border border-blue-700/50 rounded-2xl sm:rounded-3xl p-2.5 sm:p-5 flex flex-col justify-between max-h-full gap-2 sm:gap-2.5">
-                <!-- Cabecera de prueba -->
-                <div class="flex items-center justify-between gap-2">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block leading-none">Vocabulario</span>
-                        <h2 class="text-sm sm:text-xl font-black text-white leading-tight">Letras</h2>
-                    </div>
-
-                    <div class="bg-slate-950 border border-slate-700 px-3 py-1 rounded-xl text-xs sm:text-sm font-bold text-slate-300">
-                        Panel: <span id="letrasCountBadge" class="text-amber-400 font-mono-num">0</span>/10
-                    </div>
-
-                    <!-- Reloj con doble toque para alternar 45s / Infinito -->
-                    <button type="button" id="letrasTimerBox" title="Doble toque para alternar 45s / Infinito" class="flex items-center gap-1.5 bg-slate-950/95 hover:bg-slate-900 border border-emerald-400/50 px-2.5 sm:px-3 py-1 rounded-xl cursor-pointer transition">
-                        <span id="letrasTimerIcon" class="text-xs sm:text-base">⏱️</span>
-                        <span id="letrasTimerText" class="font-mono-num text-base sm:text-xl font-black text-amber-400">45s</span>
-                    </button>
-                </div>
-
-                <!-- Barra de tiempo -->
-                <div id="letrasProgressContainer" class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden shrink-0">
-                    <div id="letrasProgressBar" class="timer-bar h-full bg-emerald-400 w-full"></div>
-                </div>
-
-                <!-- Panel de 10 Letras (5x2 en móvil, 10x1 en escritorio) -->
-                <div>
-                    <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1 px-0.5">
-                        <span>Blanca: <strong class="text-white">Libre</strong> • Naranja: <strong class="text-orange-400">En uso</strong> (toca para desmarcar)</span>
-                    </div>
-                    <div id="letrasRack" class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2">
-                        <!-- 10 huecos de fichas -->
-                    </div>
-                </div>
-
-                <!-- Fase 1: Pedir Vocal o Consonante -->
-                <div id="letrasDealControls" class="bg-slate-950/75 border border-blue-800/50 rounded-xl p-3 sm:p-5 text-center space-y-3 my-auto">
-                    <p class="text-xs sm:text-sm text-slate-300">Elige <strong class="text-amber-300">Vocal</strong> o <strong class="text-blue-300">Consonante</strong> hasta completar las 10 letras:</p>
-                    <div class="flex flex-wrap justify-center gap-2 sm:gap-3">
-                        <button id="btnVocal" onclick="pickLetter('V')" class="px-4 sm:px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow transition">
-                            🅰️ Vocal
-                        </button>
-                        <button id="btnConsonante" onclick="pickLetter('C')" class="px-4 sm:px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm shadow transition">
-                            🅱️ Consonante
-                        </button>
-                        <button onclick="autoFillLetters()" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm border border-slate-600 transition">
-                            ⚡ Completar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Fase 2: Construir y Enviar Múltiples Palabras -->
-                <div id="letrasPlayControls" class="hidden flex-1 min-h-0 flex flex-col justify-between gap-1.5 sm:gap-2">
-                    <!-- Caja de palabra actual -->
-                    <div class="bg-slate-950/90 border border-blue-500/50 rounded-xl p-2 sm:p-2.5 text-center">
-                        <div class="flex items-center justify-between text-[10px] sm:text-xs mb-1">
-                            <span class="font-bold uppercase text-slate-400">Palabra actual</span>
-                            <span class="font-bold text-emerald-400">Letras: <span id="currentWordLen" class="font-mono-num text-xs sm:text-sm">0</span></span>
-                        </div>
-                        <div id="wordDisplayBox" class="min-h-[36px] sm:min-h-[42px] flex items-center justify-center gap-1 flex-wrap">
-                            <span class="text-slate-500 italic text-xs">Pulsa las letras del panel o usa el teclado...</span>
-                        </div>
-                    </div>
-
-                    <!-- Teclado táctil sincronizado con las letras disponibles -->
-                    <div id="virtualKeyboard" class="grid grid-cols-10 gap-1 bg-slate-950/75 p-1.5 rounded-xl border border-slate-800">
-                        <!-- Teclas generadas dinámicamente -->
-                    </div>
-
-                    <!-- Controles de edición rápida -->
-                    <div class="flex items-center justify-between gap-2">
-                        <button onclick="backspaceLetter()" class="flex-1 py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-600 transition">
-                            ⌫ Borrar última
-                        </button>
-                        <button onclick="clearWord()" class="flex-1 py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-600 transition">
-                            🗑️ Desmarcar todo
-                        </button>
-                    </div>
-
-                    <!-- Lista Compacta de Palabras Enviadas en esta Ronda -->
-                    <div class="bg-slate-950/90 border border-emerald-800/40 rounded-xl px-2.5 py-1.5">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Palabras enviadas (<span id="letrasWordsCount">0</span>)</span>
-                            <span class="text-[10px] text-slate-400">Mejor: <strong id="letrasBestWordBadge" class="text-amber-400">Ninguna</strong></span>
-                        </div>
-                        <div id="letrasSentWordsList" class="flex items-center gap-1.5 overflow-x-auto thin-scroll pb-0.5 min-h-[24px]">
-                            <span class="text-[11px] text-slate-500 italic">Envía una palabra y sigue buscando otra más larga...</span>
-                        </div>
-                    </div>
-
-                    <!-- Botones de Acción -->
-                    <div class="grid grid-cols-2 gap-2 pt-0.5">
-                        <button onclick="submitPlayerWord()" class="py-2 sm:py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow transition flex items-center justify-center gap-1.5 border border-emerald-400/30">
-                            <span>➕</span>
-                            <span>Enviar palabra</span>
-                        </button>
-                        <button onclick="finishLetrasRound()" class="py-2 sm:py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm shadow transition flex items-center justify-center gap-1.5">
-                            <span>🏁</span>
-                            <span>Finalizar ronda</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- PANTALLA 4: RESOLUCIÓN DE RONDA (DUELO Y PUNTOS) -->
-        <section id="roundResultScreen" class="hidden studio-glow bg-slate-900/90 border border-blue-600/50 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 max-w-4xl mx-auto w-full my-auto flex flex-col justify-between gap-3 max-h-full overflow-y-auto thin-scroll animate-pop">
-            <div class="text-center border-b border-slate-800 pb-2">
-                <span id="resultRoundLabel" class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-400">Resultado de la Ronda</span>
-                <h2 id="resultHeadline" class="text-lg sm:text-2xl font-black text-white mt-0.5">¡Punto para ti!</h2>
-                <p id="resultSubheadline" class="text-xs text-slate-300 mt-0.5"></p>
-            </div>
-
-            <!-- Comparativa Jugador vs Gemini -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4">
-                <!-- Tarjeta Jugador -->
-                <div id="playerResultCard" class="bg-slate-950/85 border border-slate-700 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">Tu Mejor Jugada</span>
-                            <span id="playerRoundPointsBadge" class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-num font-black text-xs">+0 pts</span>
-                        </div>
-                        <div id="playerResultMain" class="text-xl sm:text-2xl font-black text-white font-mono-num mb-1 break-all">---</div>
-                        <div id="playerResultDetail" class="text-xs text-slate-300 space-y-1 max-h-24 overflow-y-auto thin-scroll"></div>
-                    </div>
-
-                    <!-- Botón de validación manual/impugnación en Letras -->
-                    <div id="overrideWordContainer" class="hidden mt-2 pt-2 border-t border-slate-800">
-                        <p class="text-[11px] text-amber-300 mb-1.5">¿Tu palabra es válida en la RAE?</p>
-                        <button onclick="validatePlayerWordOverride()" class="w-full py-1.5 px-2.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 text-xs font-bold transition">
-                            ⚖️ Validar palabra y recalcular
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tarjeta Gemini -->
-                <div id="aiResultCard" class="bg-slate-950/85 border border-slate-700 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center mb-1.5">
-                            <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400">Jugada de Gemini</span>
-                            <span id="aiRoundPointsBadge" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono-num font-black text-xs">+0 pts</span>
-                        </div>
-                        <div id="aiResultMain" class="text-xl sm:text-2xl font-black text-amber-300 font-mono-num mb-1 break-all">---</div>
-                        <div id="aiResultDetail" class="text-xs text-slate-300 space-y-1 max-h-24 overflow-y-auto thin-scroll"></div>
-                    </div>
-                    <div class="mt-2 pt-1.5 border-t border-slate-800/60 text-[11px] text-slate-400 italic" id="aiCommentText">
-                        "¡Buena ronda!"
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-center pt-1">
-                <button id="nextRoundBtn" onclick="nextRound()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm shadow-lg transition">
-                    Siguiente Ronda →
-                </button>
-            </div>
-        </section>
-
-        <!-- PANTALLA 5: RESUMEN FINAL DE PARTIDA -->
-        <section id="finalSummaryScreen" class="hidden studio-glow bg-slate-900/90 border border-amber-400/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-4xl mx-auto w-full my-auto flex flex-col justify-between gap-3 max-h-full overflow-hidden animate-pop">
-            <div class="text-center shrink-0">
-                <div id="finalTrophy" class="text-3xl sm:text-4xl mb-1">🏆</div>
-                <h2 id="finalWinnerTitle" class="text-xl sm:text-3xl font-black text-white">¡Victoria!</h2>
-                <p id="finalWinnerSubtitle" class="text-slate-300 text-xs sm:text-sm">Has derrotado a Gemini en Cifras y Letras.</p>
-            </div>
-
-            <!-- Marcador Final -->
-            <div class="shrink-0 flex justify-center items-center gap-6 sm:gap-10 bg-slate-950/90 border border-blue-800/60 rounded-xl p-2.5 sm:p-4 max-w-md mx-auto w-full">
-                <div class="text-center">
-                    <div class="text-[10px] sm:text-xs font-bold uppercase text-emerald-400">Tu Puntuación</div>
-                    <div id="finalPlayerScore" class="font-mono-num text-2xl sm:text-4xl font-black text-white">0</div>
-                </div>
-                <div class="text-xl font-black text-slate-600">-</div>
-                <div class="text-center">
-                    <div class="text-[10px] sm:text-xs font-bold uppercase text-amber-400">Gemini (IA)</div>
-                    <div id="finalAiScore" class="font-mono-num text-2xl sm:text-4xl font-black text-amber-400">0</div>
-                </div>
-            </div>
-
-            <!-- Desglose de Rondas -->
-            <div class="flex-1 min-h-0 bg-slate-950/75 border border-slate-800 rounded-xl p-2.5 overflow-y-auto thin-scroll">
-                <table class="w-full text-left text-[11px] sm:text-xs">
-                    <thead>
-                        <tr class="border-b border-slate-800 text-slate-400">
-                            <th class="py-1.5 px-1.5">#</th>
-                            <th class="py-1.5 px-1.5">Prueba</th>
-                            <th class="py-1.5 px-1.5">Tú</th>
-                            <th class="py-1.5 px-1.5">Gemini</th>
-                            <th class="py-1.5 px-1.5 text-right">Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summaryTableBody" class="divide-y divide-slate-800/60">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="shrink-0 flex justify-center gap-2.5 pt-1">
-                <button onclick="startGame(gameState.mode)" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm shadow transition">
-                    🔄 Revancha
-                </button>
-                <button onclick="returnToMenu()" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-slate-600 transition">
-                    🏠 Menú
-                </button>
-            </div>
-        </section>
-
-        <!-- MODAL DE CONFIRMACIÓN PARA REINICIAR -->
-        <div id="resetModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-xs w-full text-center space-y-3 shadow-2xl">
-                <h3 class="text-lg font-black text-white">¿Abandonar partida?</h3>
-                <p class="text-xs text-slate-300">Se perderá el marcador actual y volverás al menú.</p>
-                <div class="flex gap-2.5 pt-1">
-                    <button onclick="closeResetModal()" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-xs text-slate-200">Cancelar</button>
-                    <button onclick="returnToMenu()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-xs text-white">Sí, salir</button>
-                </div>
-            </div>
+    <!-- PRUEBA DE LETRAS -->
+    <section id="lettersView" class="card hidden">
+      <div class="row">
+        <strong>🔤 Prueba de Letras</strong>
+        <div class="row">
+          <button id="lettersHintBtn" class="btn-secondary" type="button">Vocal / Consonante</button>
+          <button id="lettersBackBtn" class="btn-secondary" type="button">Menú</button>
         </div>
+      </div>
 
-    </main>
+      <div id="letterTiles" class="tiles-row"></div>
 
-    <!-- PIE DE PÁGINA COMPACTO -->
-    <footer class="w-full shrink-0 border-t border-slate-800/70 bg-slate-950/75 py-1 px-3 text-center text-[10px] sm:text-xs text-slate-400 truncate">
-        <strong class="text-slate-300">Reloj:</strong> 45s o Infinito (doble toque en el reloj para cambiar) • <strong class="text-slate-300">Fichas:</strong> Naranja = marcada en palabra.
-    </footer>
+      <div class="word-preview">
+        <span id="currentWordDisplay">---</span>
+        <div class="row">
+          <button id="undoLetterBtn" class="btn-warn" type="button">Borrar</button>
+          <button id="clearWordBtn" class="btn-secondary" type="button">Limpiar</button>
+        </div>
+      </div>
 
-    <script>
-        /* ============================================================================
-           DICCIONARIO ESPAÑOL INTEGRADO
-           ============================================================================ */
-        const RAW_DICTIONARY = `
-        CASA MESA SILLA LIBRO PERRO GATO AGUA FUEGO TIERRA AIRE CIELO LUNA SOL ESTRELLA MAR RIO MONTE VALLE BOSQUE CAMPO
-        FLOR ARBOL HOJA FRUTO SEMILLA RAIZ TRONCO RAMA PIEDRA ARENA BARRO NIEVE LLUVIA VIENTO NUBE TRUENO RAYO TORMENTA
-        TIEMPO HORA MINUTO SEGUNDO DIA NOCHE TARDE MANANA SEMANA MES ANO SIGLO EPOCA HISTORIA FUTURO PRESENTE PASADO
-        PERSONA HOMBRE MUJER NINO NINA AMIGO FAMILIA PADRE MADRE HIJO HIJA HERMANO ABUELO PRIMO SOBRINO NOVIO ESPOSO
-        CUERPO CABEZA CARA OJO NARIZ BOCA OREJA PELO CUELLO HOMBRO BRAZO MANO DEDO PECHO ESPALDA PIERNA RODILLA PIE CORAZON
-        SANGRE HUESO PIEL MENTE ALMA VOZ RISA LLANTO SUENO VIDA MUERTE SALUD FUERZA DOLOR MIEDO AMOR ODIO PAZ GUERRA
-        PUEBLO CIUDAD CALLE PLAZA PUENTE PARQUE JARDIN EDIFICIO TORRE PUERTA VENTANA PARED TECHO SUELO ESCALERA CUARTO
-        COCINA BANO SALON CAMA ESPEJO RELOJ LAMPARA CUADRO ALFOMBRA CORTINA LLAVE CANDADO CAJA BOLSA MALETA MOCHILA
-        ROPA CAMISA PANTALON FALDA VESTIDO ABRIGO CHAQUETA ZAPATO BOTA CALCETIN SOMBRERO GORRA GUANTE BUFANDA CINTURON
-        COMIDA PAN LECHE QUESO HUEVO CARNE PESCADO POLLO ARROZ PASTA SOPA ENSALADA VERDURA TOMATE PATATA CEBOLLA AJO ZANAHORIA
-        MANZANA PERA PLATANO NARANJA LIMON FRESA CEREZA MELON SANDIA UVA ACEITE SAL AZUCAR MIEL CAFE TE VINO CERVEZA ZUMO
-        TRABAJO OFICIO DINERO MONEDA BILLETE BANCO TIENDA MERCADO PRECIO COMPRA VENTA NEGOCIO EMPRESA FABRICA OFICINA
-        ESCUELA COLEGIO CLASE AULA ALUMNO MAESTRO PROFESOR EXAMEN NOTA LAPIZ PLUMA PAPEL CUADERNO GOMA REGLA MAPA GLOBO
-        CIENCIA NUMERO LETRA PALABRA FRASE TEXTO CUENTO NOVELA POEMA CANCION MUSICA RITMO NOTA GUITARRA PIANO FLAUTA TAMBOR
-        ARTE PINTURA DIBUJO COLOR ROJO AZUL VERDE AMARILLO BLANCO NEGRO GRIS MARRON ROSA NARANJA MORADO DORADO PLATEADO
-        JUEGO DEPORTE PELOTA BALON EQUIPO PARTIDO GOL PUNTO META CARRERA SALTO NADAR CORRER VOLAR BAILAR CANTAR REIR LLORAR
-        COCHE TREN AVION BARCO BICICLETA MOTO CAMION AUTOBUS METRO VIAJE CAMINO RUTA CARRETERA PUERTO ESTACION AEROPUERTO
-        ANIMAL LEON TIGRE OSO LOBO ZORRO CONEJO RATON CABALLO VACA OVEJA CERDO GALLINA PATO AGUILA PALOMA BUHO SERPIENTE
-        RANA PEZ TIBURON BALLENA DELFIN TORTUGA MARIPOSA ABEJA HORMIGA ARANA MOSCA MOSQUITO CARACOL GUSANO PULPO CANGREJO
-        GRANDE PEQUENO ALTO BAJO LARGO CORTO ANCHO ESTRECHO GORDO FLACO FUERTE DEBIL DURO BLANDO PESADO LIGERO LLENO VACIO
-        NUEVO VIEJO JOVEN BUENO MALO BONITO FEO LIMPIO SUCIO CLARO OSCURO CALIENTE FRIO DULCE SALADO AMARGO ACIDO PICANTE
-        RAPIDO LENTO FACIL DIFICIL POSIBLE IMPOSIBLE CIERTO FALSO VERDAD MENTIRA SECRETO MISTERIO MAGIA SUERTE DESTINO
-        ALEGRE TRISTE FELIZ ENFADADO CANSADO TRANQUILO NERVIOSO VALIENTE COBARDE LISTO TONTO SABIO LOCO POBRE RICO
-        ABRIR CERRAR ENTRAR SALIR SUBIR BAJAR LLEGAR PARTIR VOLVER QUEDAR SEGUIR PARAR EMPEZAR ACABAR GANAR PERDER BUSCAR
-        ENCONTRAR MIRAR VER OIR ESCUCHAR HABLAR DECIR CONTAR PREGUNTAR RESPONDER PENSAR CREER SABER CONOCER APRENDER ENSENAR
-        QUERER AMAR ODIAR SENTIR VIVIR MORIR NACER CRECER CAMBIAR AYUDAR CUIDAR CURAR ROMPER ARREGLAR CONSTRUIR DESTRUIR
-        COMER BEBER DORMIR DESPERTAR ANDAR PASEAR VIAJAR CONDUCIR NAVEGAR CAER LEVANTAR SENTAR TUMBAR TOCAR COGER DEJAR
-        DAR RECIBIR TRAER LLEVAR ENVIAR GUARDAR ESCONDER MOSTRAR EXPLICAR PROBAR INTENTAR LOGRAR FALLAR DUDAR ELEGIR
-        ABANICO ABIERTO ABRAZO ABRILLANTAR ABSOLUTO ABUELA ABUNDANTE ACABADO ACADEMIA ACAMPADA ACARICIAR ACCESO ACCIDENTE
-        ACCION ACEITUNA ACELERAR ACENTO ACEPTAR ACERCAR ACERO ACERTAR ACERTIJO ACIDEZ ACLARAR ACOGER ACOMPANAR ACONSEJAR
-        ACORDAR ACORDEON ACOSTAR ACOSTUMBRAR ACTITUD ACTIVIDAD ACTIVO ACTOR ACTRIZ ACTUACION ACTUAL ACUARIO ACUERDO ACUSAR
-        ADAPTAR ADELANTE ADELGAZAR ADEMAS ADENTRO ADEUDO ADIVINAR ADJETIVO ADMIRAR ADMITIR ADOPTAR ADORAR ADORNO ADQUIRIR
-        ADUANA ADULTO ADVERSARIO ADVERTIR AEREO AFECTO AFEITAR AFICION AFILAR AFIRMAR AFLOJAR AFORTUNADO AFRICANO AFRONTAR
-        AFUERA AGACHAR AGARRAR AGENCIA AGENDA AGENTE AGILIDAD AGITAR AGOSTO AGOTAR AGRADABLE AGRADECER AGRANDAR AGREGAR
-        AGRIO AGRUPAR AGUANTAR AGUDO AGUJA AGUJERO AHOGAR AHORA AHORRAR AIREADO AISLAR AJEDREZ AJENO AJUSTAR ALABAR
-        ALAMBRE ALARMA ALBANIL ALBERGUE ALBUM ALCALDE ALCANCE ALCANZAR ALCOHOL ALDEA ALEGRIA ALEJAR ALEMAN ALERGIA ALERTA
-        ALFABETO ALFILER ALGAS ALGODON ALGUIEN ALGUNO ALIANZA ALIENTO ALIMENTAR ALIMENTO ALINEAR ALIVIAR ALMACEN ALMENDRA
-        ALMOHADA ALOJAR ALQUILAR ALREDEDOR ALTERAR ALTERNAR ALTURA ALUMBRAR AMABLE AMANECER AMANTE AMARILLO AMASAR AMBIENTE
-        AMBICION AMBOS AMENAZA AMERICA AMISTAD AMONTONAR AMPLIO ANALISIS ANALIZAR ANCHOA ANCIANO ANCLA ANDEN ANECDOTA
-        ANESTESIA ANFIBIO ANGEL ANGOSTO ANGULO ANILLO ANIMO ANIVERSARIO ANOCHECER ANONIMO ANOTAR ANSIEDAD ANTENAS ANTERIOR
-        ANTES ANTIGUO ANTOJO ANUAL ANULAR ANUNCIO ANZUELO APACIBLE APAGAR APARATO APARCAR APARECER APARIENCIA APARTAMENTO
-        APARTAR APASIONAR APELLIDO APENAS APERTURA APETITO APLAUDIR APLAZAR APLICAR APODERAR APORTAR APOSTAR APOYAR
-        APRECIAR APRENDER APRETAR APROBAR APROVECHAR APROXIMAR APUNTE APURAR ARANA ARBITRO ARBOLEDA ARBUSTO ARCHIVO
-        ARCOIRIS ARDILLA ARENA ARGUMENTO ARMA ARMARIO ARMONIA AROMA ARQUITECTO ARRANCAR ARRASTRAR ARREGLO ARREPENTIR
-        ARRIBA ARRIESGAR ARRODILLAR ARROJAR ARROYO ARRUGA ARSENAL ARTEFACTO ARTERIA ARTESANO ARTICULO ARTISTA ASADO
-        ASALTO ASAMBLEA ASCENSOR ASEGURAR ASESINO ASIENTO ASISTIR ASOCIAR ASOMAR ASOMBRO ASPECTO ASPERO ASPIRAR ASTRONAUTA
-        ASUMIR ASUNTO ASUSTAR ATACAR ATAJO ATAR ATARDECER ATENCION ATENDER ATERRIZAR ATLETA ATMOSFERA ATOMO ATRAER
-        ATRAPAR ATRAS ATRAVESAR ATREVER ATRIBUTO AUMENTAR AUNQUE AURORA AUSENCIA AUTENTICO AUTOMOVIL AUTONOMIA AUTOR
-        AUTORIDAD AUXILIO AVANCE AVANZAR AVENTURA AVERIA AVERIGUAR AVESTRUZ AVIADOR AVISAR AVISPA AYER AYUDA AZAFATA
-        AZOTEA AZUCARAR AZULEJO BABERO BACALAO BACTERIA BACHE BAILARIN BAJADA BALANZA BALCON BALLENA BALONCESTO BALONMANO
-        BAMBU BANANA BANCARIO BANCO BANDERA BANDEJA BANDIDO BANQUETE BARANDILLA BARATO BARBA BARBACOA BARBERO BARCA
-        BARNIZ BARRA BARRANCO BARRER BARRERA BARRIGA BARRIL BARRIO BASCULA BASE BASTANTE BASTON BASURA BATALLA BATERIA
-        BATIDO BATIR BAUL BAUTIZO BEBE BEBIDA BECA BELLEZA BELLOTA BENDECIR BENEFICIO BERENJENA BESAR BIBLIOTECA
-        BICICLETA BIENVENIDO BIGOTE BILINGUE BIOGRAFIA BIOLOGIA BISABUELO BIZCOCHO BLANCO BLANDURA BLOQUE BLOQUEAR BOBINA
-        BOCADILLO BOCINA BODA BODEGA BOFETADA BOLA BOLERO BOLETO BOLIGRAFO BOLSILLO BOMBA BOMBERO BOMBILLA BONDAD
-        BONITO BOQUERON BORDE BORDAR BORRAR BORRASCA BOSQUEJO BOSTEZAR BOTELLA BOTICA BOTIN BOTON BOVEDA BOXEO
-        BRASA BRAVO BRAZALETE BREVE BRILLANTE BRILLO BRINCAR BRINDIS BRISA BROMA BRONCE BROTE BRUJA BRUJULA BRUTO
-        BUCEAR BUENO BUFANDA BUHO BUITRE BULTO BUQUE BURBUJA BURLA BUSQUEDA BUTACA BUZON CABALLERO CABANA CABELLO
-        CABER CABEZA CABINA CABLE CABRA CACAHUETE CACAO CACERIA CACTUS CADAVER CADENA CADERA CAIDA CAIMAN CAJERO
-        CAJON CALABAZA CALAMAR CALAMBRE CALCULO CALDERA CALENDARIO CALENTAR CALIDAD CALIDO CALIENTE CALMA CALOR CALZADO
-        CAMARA CAMARERO CAMAROTE CAMBIAR CAMELLO CAMINAR CAMIONETA CAMISETA CAMPANA CAMPAMENTO CAMPEON CAMPESINO CANA
-        CANAL CANARIO CANASTA CANCELAR CANCION CANDELABRO CANGREJO CANGURO CANICA CANOA CANSANCIO CANTANTE CANTERA CANTIDAD
-        CAPA CAPACIDAD CAPAZ CAPITAL CAPITAN CAPITULO CAPRICHO CAPSULA CAPTURAR CAPUCHA CARACOL CARACTER CARAMELO CARBON
-        CARCEL CARGADOR CARGAR CARICIA CARINO CARNAVAL CARNICERO CARPINTERO CARRERA CARRETERA CARRETILLA CARRO CARTA CARTEL
-        CARTERA CARTON CASCADA CASCARA CASCO CASERO CASINO CASPA CASTANA CASTELLANO CASTIGO CASTILLO CASUALIDAD CATALOGO
-        CATARATA CATEDRAL CATEGORIA CATORCE CAUCE CAUSA CAUTELA CAVAR CAVERNA CAZADOR CEBOLLA CEBRA CEDER CEJA CELDA
-        CELEBRAR CELESTE CELOS CELULA CEMENTO CENA CENICERO CENIZA CENTENA CENTIMO CENTRAL CENTRO CEPILLO CERAMICA
-        CERCANO CERDO CEREAL CEREBRO CEREMONIA CERILLA CERO CERRADURA CERRO CERTAMEN CERVEZA CESPED CESTA CHALECO
-        CHAMPAN CHAMPINON CHAMPU CHANDAL CHAQUETA CHARCO CHARLA CHATARRA CHICLE CHICO CHIMENEA CHIMPANCE CHINO CHISPA
-        CHISTE CHOCOLATE CHOFER CHOQUE CHORIZO CHOZA CICATRIZ CICLISMO CIEGO CIENCIA CIENTO CIERVO CIFRA CIGARRA
-        CILINDRO CIMA CIMIENTO CINCO CINE CINTA CINTURA CIRCO CIRCULO CIRUELA CIRUGIA CISNE CITA CIUDADANO CIVIL
-        CLARIDAD CLARO CLASE CLASICO CLAVAR CLAVE CLAVEL CLIENTE CLIMA CLINICA CLUB COBARDE COBERTURA COBIJAR COBRA
-        COBRAR COBRE COCODRILO CODIGO CODO COHETE COJIN COLABORAR COLADOR COLCHON COLECCION COLEGIO COLERA COLGAR
-        COLINA COLLAR COLMENA COLMILLO COLOCAR COLONIA COLORIDO COLUMNA COLUMPIO COMANDANTE COMARCA COMBATE COMBINAR COMEDIA
-        COMEDOR COMENTAR COMENZAR COMERCIO COMETA COMICO COMIDA COMIENZO COMISARIA COMISION COMODO COMPADRE COMPANERO COMPARAR
-        COMPARTIR COMPAS COMPENSAR COMPETIR COMPLEJO COMPLETO COMPLICAR COMPONER COMPRAR COMPRENDER COMPROBAR COMUN COMUNICAR
-        CONCEBIR CONCEDER CONCENTRAR CONCEPTO CONCIERTO CONCLUIR CONCRETO CONCURSO CONDENA CONDICION CONDUCIR CONDUCTA CONEJO
-        CONEXION CONFERENCIA CONFIANZA CONFIAR CONFLICTO CONFORME CONFUNDIR CONGELAR CONGRESO CONJUNTO CONMOVER CONOCIDO CONQUISTA
-        CONSECUENCIA CONSEGUIR CONSEJO CONSERVAR CONSIDERAR CONSOLAR CONSTANTE CONSTRUIR CONSULTA CONSUMIR CONTACTO CONTAGIAR CONTAMINAR
-        CONTEMPLAR CONTENER CONTENTO CONTESTAR CONTINENTE CONTINUAR CONTRARIO CONTRATO CONTROL CONVENCER CONVENIR CONVERSAR CONVERTIR
-        INVITAR COORDINAR COPA COPIA CORAZON CORBATA CORCHO CORDERO CORDILLERA CORDON CORONA CORONEL CORRAL CORRECTO
-        CORREDOR CORREGIR CORREO CORRER CORRIENTE CORTAR CORTEZA CORTINA COSECHA COSER COSQUILLAS COSTA COSTADO COSTILLA
-        COSTO COSTUMBRE COTIDIANO CRATER CREACION CREAR CRECER CRECIMIENTO CREDITO CREENCIA CREMA CREPUSCULO CRIATURA CRIMEN
-        CRISTAL CRITERIO CRITICA CROQUETA CRUCE CRUDO CRUEL CRUZAR CUADERNO CUADRADO CUADRO CUALIDAD CUALQUIERA CUARENTA
-        CUARTEL CUARTO CUBIERTA CUBIERTO CUBO CUBRIR CUCHARA CUCHILLO CUELLO CUENCA CUERDA CUERNO CUERO CUERPO CUERVO
-        CUESTION CUEVA CUIDADO CULEBRA CULPA CULTIVO CULTURA CUMBRE CUMPLEANOS CUMPLIR CUNA CUOTA CUPULA CURA CURIOSO
-        CURSO CURVA CUSTODIA DAMA DANZA DANAR DARDO DATO DEBER DEBILIDAD DECADA DECENA DECENTE DECIDIR DECIMAL DECISION
-        DECLARAR DECORAR DECRETO DEDICAR DEFENDER DEFENSA DEFINIR DEFORMAR DEJAR DELANTAL DELANTERO DELFIN DELGADO DELICADO
-        DELITO DEMANDA DEMASIADO DEMOCRACIA DEMONIO DEMOSTRAR DENTISTA DENTRO DENUNCIA DEPARTAMENTO DEPENDER DEPORTE DEPOSITO DERECHA
-        DERECHO DERRETIR DERRIBAR DESAFIO DESAGRADABLE DESAPARECER DESARROLLAR DESASTRE DESAYUNO DESCALZO DESCANSAR DESCARGAR DESCENDER
-        DESCONOCIDO DESCRIBIR DESCUBRIR DESCUENTO DESEAR DESEO DESERTAR DESFILAR DESGRACIA DESIERTO DESIGUAL DESLIZAR DESMAYAR DESNUDO
-        DESORDEN DESPACHO DESPACIO DESPEDIDA DESPEGAR DESPERDICIO DESPERTAR DESPIERTO DESPLAZAR DESPRECIAR DESPUES DESTACAR DESTINO DESTROZAR
-        DESTRUIR DETALLE DETECTIVE DETENER DETERMINAR DETRAS DEUDA DEVOLVER DIABLO DIADEMA DIALOGO DIAMANTE DIARIO DIBUJAR
-        DICCIONARIO DICIEMBRE DICTADO DIENTE DIETA DIFERENCIA DIFICULTAD DIFUNDIR DIGERIR DIGITAL DIGNIDAD DILUVIO DIMENSION DINAMICA
-        DINOSAURIO DIPLOMA DIPUTADO DIRECCION DIRECTO DIRECTOR DIRIGIR DISCIPLINA DISCO DISCULPA DISCURSO DISCUTIR DISENAR DISFRAZ
-        DISFRUTAR DISGUSTO DISIMULAR DISMINUIR DISPARAR DISPONER DISTANCIA DISTINTO DISTRAER DISTRIBUIR DIVERSO DIVIDIR DIVORCIO DOBLAR
-        DOBLE DOCENA DOCTOR DOCUMENTO DOLER DOLOROSO DOMESTICO DOMICILIO DOMINGO DOMINIO DONACION DONDE DORMITORIO DRAGON
-        DRAMA DUCHA DUDA DUELO DUENO DULZURA DUPLICAR DURACION DURANTE DURAZNO ECLIPSE ECONOMIA ECUACION EDAD EDIFICAR
-        EDITOR EDUCACION EFECTIVO EFECTO EFICAZ EGOISMO EJECUTAR EJEMPLO EJERCER EJERCITO ELASTICO ELECCION ELECTRICO ELEFANTE
-        ELEGANCIA ELEMENTO ELEVAR ELIMINAR ELOGIO EMBAJADA EMBARAZO EMBARCAR EMOCION EMPAPAR EMPATE EMPENAR EMPEORAR EMPERADOR
-        EMPLEADO EMPLEO EMPRENDER EMPUJAR ENAMORAR ENANO ENCABEZAR ENCAJAR ENCANTAR ENCARGAR ENCENDER ENCERRAR ENCIMA ENCOGER
-        ENCONTRAR ENCUENTRO ENEMIGO ENERGIA ENERO ENFADAR ENFERMEDAD ENFOCAR ENFRIAR ENGANAR ENORME ENREDAR ENSAYO ENSENANZA
-        ENTENDER ENTERAR ENTERO ENTERRAR ENTRADA ENTRENAR ENTREGAR ENTRETENER ENTREVISTA ENTUSIASMO ENVEJECER ENVIDIAR ENVOLVER EQUIPAJE
-        EQUIPO EQUIVOCAR ERROR ESCALA ESCALAR ESCANDALO ESCAPAR ESCAPE ESCARABAJO ESCASO ESCENA ESCLAVO ESCOBA ESCOGER
-        ESCONDER ESCRIBIR ESCRITOR ESCUCHAR ESCUDO ESCUELA ESCULTURA ESENCIA ESFERA ESFUERZO ESPACIO ESPADA ESPALDA ESPANTAR
-        ESPANOL ESPECIAL ESPECIE ESPECTACULO ESPEJO ESPERANZA ESPERAR ESPESO ESPINA ESPIRAL ESPIRITU ESPLENDOR ESPONJA ESPOSA
-        ESPUMA ESQUELETO ESQUINA ESTABLE ESTACION ESTADIO ESTADO ESTAMPADO ESTANCIA ESTANTE ESTANQUE ESTATUA ESTATURA ESTE
-        ESTILO ESTIMAR ESTOMAGO ESTORBAR ESTRATEGIA ESTRECHO ESTRELLA ESTRENO ESTRUCTURA ESTUDIANTE ESTUDIO ESTUPENDO ETAPA ETERNO
-        ETIQUETA EUROPEO EVACUAR EVALUAR EVITAR EVOLUCION EXACTO EXAGERAR EXAMEN EXCELENTE EXCEPCION EXCESO EXCLAMAR EXCLUSIVO
-        EXCURSION EXIGIR EXISTIR EXITO EXOTICO EXPEDICION EXPERIENCIA EXPERIMENTO EXPERTO EXPLICAR EXPLORAR EXPLOSION EXPONER EXPORTAR
-        EXPRESAR EXTENDER EXTERIOR EXTRAER EXTRANJERO EXTRANO EXTREMIDAD FABRICA FABULA FACILIDAD FACTURA FACULTAD FALDA FALLO
-        FALSO FAMILIA FAMOSO FANTASIA FANTASMA FARMACIA FAROLA FASCINAR FASTIDIAR FATIGA FAVOR FAVORITO FEBRERO FECHA FELICIDAD
-        FEMENINO FENOMENO FERIA FEROZ FERROCARRIL FERTIL FESTIVAL FIESTA FIGURA FIJAR FILA FILETE FILOSOFIA FINAL FINCA
-        FINO FIRMA FISICA FLACO FLAMENCO FLECHA FLEXIBLE FLOJO FLORECER FLORERO FLOTAR FLUIR FOCA FOGATA FOLLETO
-        FONDO FORMA FORMAR FORMULA FORTALEZA FORTUNA FORZAR FOTO FRACASO FRAGANCIA FRAGIL FRAGMENTO FRANCES FRANCO FRASCO
-        FRECUENCIA FREGAR FRENAR FRENTE FRESCO FRONTERA FROTAR FRUTA FUEGO FUENTE FUERZA FUGA FUNCION FUNDAR FUNERAL
-        FURIA FUSIL FUTBOL GABINETE GAFAS GALAXIA GALERIA GALLETA GALLINA GALLO GANADERIA GANANCIA GANAR GANCHO GANGA
-        GARGANTA GARRA GARRAFA GASOLINA GASTAR GATEAR GAVILAN GEMELO GENERAL GENERO GENEROSO GENIO GENTE GEOGRAFIA GEOMETRIA
-        GERENTE GESTO GIGANTE GIMNASIA GIRAR GIRASOL GLACIAR GLOBO GLORIA GOBIERNO GOLFO GOLONDRINA GOLOSINA GOLPE
-        GOMA GORDO GORRION GOTA GOZAR GRABAR GRACIA GRADA GRADO GRADUAR GRAFICO GRAMO GRANERO GRANIZO GRANJA GRANO
-        GRASA GRATITUD GRAVE GRIETA GRILLO GRIPE GRITAR GROSERO GRUA GRUPO GUANTE GUARDAR GUARDIA GUERRA GUIA
-        GUISANTE GUITARRA GUSTO HABITACION HABITAR HABITO HABLAR HACER HACHA HALLAR HAMBRE HARINA HAZANA HECHO HELADO
-        HELICOPTERO HEMBRA HERIDA HERMANO HERMOSO HEROE HERRAMIENTA HERVIR HIELO HIERBA HIERRO HIGADO HIGIENE HILERA HILO
-        HIMNO HINCHADO HIPOPOTAMO HISTORIA HOGAR HOJA HOLGAZAN HOMBRE HOMBRO HOMENAJE HONDO HONESTIDAD HONGO HONOR HONRADEZ
-        HORA HORIZONTE HORNO HORROR HOSPITAL HOTEL HUECO HUELLA HUERTA HUESO HUESPED HUEVO HUIR HUMANIDAD HUMEDAD HUMILDE
-        HUMO HUMOR HUNDIR HURACAN IDEA IDEAL IDIOMA IGLESIA IGNORAR IGUAL ILEGAL ILUMINAR ILUSION IMAGEN IMAGINAR
-        IMAN IMITAR IMPACIENCIA IMPEDIR IMPERIO IMPLICAR IMPORTANTE IMPOSIBLE IMPRESION IMPRIMIR IMPULSO INCENDIO INCLINAR INCLUIR
-        INCOMODO INCREIBLE INDICAR INDICE INDIVIDUO INDUSTRIA INFANCIA INFANTIL INFERIOR INFINITO INFLUENCIA INFORMAR INGENIO INGREDIENTE
-        INICIAR INJUSTO INMENSO INOCENTE INSECTO INSISTIR INSPECTOR INSPIRAR INSTALAR INSTANTE INSTITUTO INSTRUCCION INSTRUMENTO INSULTO
-        INTELIGENTE INTENCION INTENSO INTENTAR INTERES INTERIOR INTERNO INTERPRETAR INTERRUPTOR INTERVALO INTIMO INTRODUCIR INUNDAR INUTIL
-        INVADIR INVENTAR INVIERNO INVISIBLE INVITAR INYECCION ISLA IZQUIERDA JABALI JABON JAMON JARDIN JARRA JARRON JAULA
-        JEFE JERINGA JINETE JIRAFA JORNADA JOVEN JOYA JUBILADO JUDIA JUEGO JUEVES JUEZ JUGADOR JUGUETE JUICIO JULIO
-        JUNIO JUNTAR JURADO JUSTICIA JUVENTUD KILOMETRO LABERINTO LABIO LABOR LADRAR LADRILLO LADRON LAGARTO LAGO LAGRIMA
-        LAMENTAR LAMPARA LANA LANCE LANCHA LANZA LANZAR LAPIZ LARGO LASTIMA LATA LATIDO LAUREL LAVADORA LAVAR LAZO
-        LEALTAD LECCION LECHUGA LECTOR LECTURA LEER LEJANO LENGUA LENGUAJE LENTEJA LENTO LENA LEON LEOPARDO LESION
-        LETRA LEVANTAR LEYENDA LIBERTAD LIBRERIA LIBRO LICENCIA LIDER LIEBRE LIENZO LIGA LIGERO LIMITE LIMON LIMPIEZA
-        LINEA LINTERNA LIO LIQUIDO LISO LISTA LITERATURA LITRO LLAMA LLAMAR LLANO LLANTA LLAVE LLEGADA LLENAR LLORAR
-        LLOVIZNA LLUVIA LOBO LOCAL LOCOMOTORA LOCURA LODO LOGICA LOGRAR LOMO LONGITUD LORO LUCERO LUCHA LUCIR LUGAR
-        LUJO LUMINOSO LUNA LUNES LUPA LUZ MACETA MACHO MADERA MADRE MADRUGADA MADURO MAESTRO MAGIA MAGNIFICO MAIZ
-        MALDAD MALETA MALEZA MALO MAMIFERO MANANTIAL MANCHA MANDAR MANDARINA MANEJO MANERA MANGA MANGO MANIFESTAR MANO
-        MANTA MANTECA MANTEQUILLA MANTEL MANTENER MANUAL MANZANA MAQUINA MARAVILLA MARCA MARCAR MARCHA MAREA MARFIL MARGEN
-        MARIDO MARINA MARIPOSA MARISCO MARMOL MARRON MARTES MARTILLO MASACRE MASCARA MASCOTA MASAJE MATERIAL MATERNIDAD MATRICULA
-        MATRIMONIO MAYOR MAYORIA MECANICO MEDALLA MEDIA MEDIANO MEDICINA MEDIDA MEDIO MEDIODIA MEDITAR MEJILLA MEJOR MELOCOTON
-        MELODIA MELON MEMORIA MENOR MENSAJE MENTE MENTIRA MENU MERCADO MERECER MERIENDA MERMELADA MESETA METAL METEORO
-        METODO METRO MEZCLA MIEDO MIEL MIEMBRO MIENTRAS MILAGRO MILITAR MILLON MIMAR MINERAL MINIMO MINISTRO MINUTO
-        MIRADA MIRAR MISTERIO MITAD MITO MOCHILA MODA MODELO MODERNO MODESTO MODO MOJAR MOLDE MOLESTAR MOLINO MOMENTO
-        MONEDA MONO MONSTRUO MONTANA MONTON MONUMENTO MORAL MORDER MORENO MORTAL MOSCA MOSQUITO MOSTRAR MOTIVO MOTOR
-        MOVER MOVIMIENTO MUCHACHO MUCHO MUEBLE MUELLE MUERTE MUESTRA MULTA MULTITUD MUNDIAL MUNDO MUNECA MURALLA MURCIELAGO
-        MUSCULO MUSEO MUSICA MUSLO NACER NACION NADAR NARANJA NARIZ NATACION NATURALEZA NAUFRAGIO NAVAJA NAVEGAR NAVIDAD
-        NEBLINA NECESIDAD NECIO NEGAR NEGOCIO NEGRO NERVIO NEUMATICO NEUTRAL NEVADA NEVERA NIETO NIEVE NINGUNO NINO
-        NIVEL NOBLE NOCHE NOCION NOMBRE NORMAL NORTE NOTA NOTICIA NOVEDAD NOVELA NOVIEMBRE NOVIO NUBE NUDO NUERA
-        NUEVE NUEVO NUEZ NUMERO NUMEROSO OBEDECER OBJETIVO OBJETO OBLIGAR OBRA OBRERO OBSERVAR OBSTACULO OBTENER OCASION
-        OCEANO OCHO OCTUBRE OCULTAR OCUPAR OCURRIR OESTE OFENDER OFERTA OFICIAL OFICINA OFRECER OIDO OIR OJALA
-        OLA OLEAJE OLER OLFATO OLIVO OLOR OLVIDAR OMBLIGO ONDA OPCION OPERACION OPINION OPONER OPORTUNIDAD OPUESTO
-        ORACION ORDEN ORDENADOR ORDINARIO OREJA ORGANISMO ORGANIZAR ORGULLO ORIENTE ORIGEN ORILLA ORQUESTA OSCURIDAD OSO
-        OTONO OTORGAR OVEJA OXIGENO PACIENCIA PACIFICO PACTO PADRE PAGAR PAGINA PAIS PAISAJE PAJA PAJARO PALABRA
-        PALACIO PALANCA PALIDO PALMA PALO PALOMA PANADERIA PANDILLA PANICO PANTALLA PANTALON PANTANO PANUELO PAPEL PAQUETE
-        PARADA PARAGUAS PARAISO PARALELO PARAR PARCELA PARECER PARED PAREJA PARENTESCO PARQUE PARRAFO PARTE PARTICIPAR PARTICULAR
-        PARTIDA PASADO PASAJE PASAR PASCUA PASEO PASILLO PASO PASTEL PASTILLA PASTO PATA PATATA PATIN PATIO PATRIA
-        PATRON PAUSA PAVO PAYASO PEATON PECADO PECHO PEDAL PEDAZO PEDIR PEGAR PEINAR PELIGRO PELO PELOTA PELUQUERIA
-        PENA PENDIENTE PENETRACION PENSAMIENTO PENSAR PEON PEOR PEPINO PEQUENO PERA PERCIBIR PERDER PERDON PEREZA PERFECTO
-        PERFUME PERIODICO PERIODO PERLA PERMANECER PERMISO PERRO PERSEGUIR PERSONA PERSONAJE PERSPECTIVA PERTENECER PESADILLA PESADO PESAR
-        PESCAR PESCADO PESO PESTANA PETALO PEZ PIEDRA PIEL PIERNA PIEZA PILA PILOTO PIMIENTA PINCEL PINO PINTAR
-        PINTURA PINZA PISCINA PISO PISTA PISTOLA PLACER PLANCHA PLANETA PLANO PLANTA PLASTICO PLATA PLATANO PLATO PLAYA
-        PLAZA PLAZO PLEGARIA PLENO PLOMO PLUMA POBLACION POBRE PODER PODEROSO POEMA POESIA POETA POLICIA POLILLA
-        POLITICA POLLO POLVO POMADA PONER POPULAR PORCION PORQUE PORTADA PORTERO POSIBILIDAD POSICION POSTAL POSTRE POTENCIA
-        POZO PRACTICA PRADERA PRECIO PRECIOSO PRECIPICIO PRECISAR PREFERIR PREGUNTA PREMIO PRENDA PRENSA PREOCUPAR PREPARAR PRESENCIA
-        PRESENTAR PRESION PRESTAR PRESUMIR PRIMAVERA PRIMERO PRIMO PRINCESA PRINCIPIO PRISA PRISION PRIVADO PRIVILEGIO PROBLEMA PROCEDER
-        PROCESO PRODUCIR PRODUCTO PROFESION PROFESOR PROFUNDO PROGRAMA PROGRESO PROHIBIR PROMESA PRONTO PROPIEDAD PROPIO PROPONER PROTEGER
-        PROTESTA PROVECHO PROYECTO PRUDENTE PRUEBA PUBLICO PUEBLO PUENTE PUERTA PUERTO PUESTO PULGA PULGAR PULMON PULPO
-        PULSERA PUNTA PUNTUAL PUNAL PUNO PUPITRE PUREZA QUEBRAR QUEDAR QUEJA QUEMAR QUERER QUESO QUIETO QUIMICA
-        QUINCE QUITAR RABIA RACIMO RACION RADIO RAIZ RAMA RANA RANGO RAPIDO RAQUETA RARO RASCAR RASGO RATO
-        RATON RAYO RAZA RAZON REACCION REAL REALIDAD REBANADA REBANO REBELDE REBOTAR RECETA RECHAZAR RECIBIR RECIENTE
-        RECINTO RECLAMAR RECOGER RECOMENDAR RECONOCER RECORDAR RECORRER RECREO RECTANGULO RECTO RECUERDO RECURSOS REDONDO REDUCIR REFLEJO
-        REFORMA REFRESCO REFUGIO REGALO REGAR REGION REGLA REGRESAR REGULAR REINA REINO REIR RELACION RELAMPAGO RELATO
-        RELIEVE RELIGION RELOJ REMAR REMEDIO REMO REMOLQUE RENCOR RENDIR RENOVAR RENTA REPARAR REPARTIR REPASAR REPENTE
-        REPETIR REPOLLO REPOSO REPRESENTAR REPROCHAR REPTIL REPUBLICA RESBALAR RESCATAR RESERVA RESFRIADO RESIDENCIA RESISTIR RESOLVER RESPETO
-        RESPIRAR RESPONDER RESPUESTA RESTAURANTE RESTO RESULTADO RESUMEN RETIRAR RETRASO RETRATO REUNION REVELAR REVES REVISTA REVOLUCION
-        REY REZAR RICO RIDICULO RIESGO RINCON RISA RITMO RIVAL ROBAR ROBLE ROCA ROCIAR RODAR RODEAR RODILLA
-        ROGAR ROJO ROLLO ROMANCE ROMPER RONCAR ROPA ROSA ROSQUILLA ROSTRO ROTO ROTULO RUEDA RUGIDO RUIDO RUINA
-        RUMBO RUMOR RURAL RUTA SABANA SABER SABIDURIA SABIO SABOR SACAR SACERDOTE SACO SACUDIR SALARIO SALIDA SALIR
-        SALMON SALON SALSA SALTAR SALUD SALUDO SALVAJE SALVAR SANDALIA SANDIA SANGRE SANO SANTIDAD SARAMPION SARTEN SASTRE
-        SATELITE SATISFACCION SECAR SECCION SECO SECRETO SECUNDARIO SED SEDA SEGUIR SEGUNDO SEGURIDAD SEIS SELECCION SELLO
-        SELVA SEMANA SEMBRAR SEMILLA SENAL SENCILLO SENDERO SENO SENSACION SENTAR SENTIDO SENTIMIENTO SEPARAR SEPTIEMBRE SEQUIA SER
-        SERENIDAD SERIE SERIO SERPIENTE SERVICIO SERVILLETA SERVIR SESENTA SESION SETA SEVERO SIESTA SIETE SIGLO SIGNIFICADO SILENCIO
-        SILLA SILLON SIMBOLO SIMPATIA SIMPLE SIMULAR SINCERO SINDICATO SINGULAR SIRENA SISTEMA SITIO SITUACION SOBERANO SOBRA SOBRE
-        SOBRINO SOCIAL SOCIEDAD SOCIO SOCORRO SOFA SOL SOLDADO SOLEDAD SOLICITAR SOLIDO SOLITARIO SOLO SOLTAR SOLUCION SOMBRA
-        SOMBRERO SOMETER SONAR SONIDO SONRISA SOPA SOPLAR SOPORTAR SORDO SORPRESA SOSPECHA SOTANO SUAVE SUBIR SUBMARINO SUCEDER
-        SUCESO SUCIEDAD SUDOR SUEGRA SUELO SUENO SUERTE SUFICIENTE SUFRIR SUGERIR SUJETAR SUMA SUMERGIR SUPERAR SUPERFICIE SUPERIOR
-        SUPONER SUR SURGIR SUSPENDER SUSPIRO SUSTANCIA SUSTO TABACO TABLA TABLERO TACON TACTO TALLAR TALLER TALLO TAMANO
-        TAMBOR TAMPOCO TANQUE TAPA TAPAR TAPIZ TARDE TAREA TARIFA TARJETA TARRO TARTA TAZA TEATRO TECHO TECLA
-        TECNICA TEJADO TEJER TEJIDO TELA TELEFONO TELEVISION TEMA TEMBLAR TEMER TEMPERATURA TEMPESTAD TEMPLO TEMPRANO TENAZ TENEDOR
-        TENER TENIS TENSION TENTACION TEORIA TERCERO TERMINAR TERMO TERRAZA TERREMOTO TERRENO TERRIBLE TERRITORIO TERROR TESORO TESTIGO
-        TEXTO TIBURON TIEMPO TIENDA TIERNO TIERRA TIGRE TIJERAS TIMBRE TIMIDO TINTA TIO TIPICO TIPO TIRAR TITULO
-        TIZA TOALLA TOBILLO TOCAR TODO TOLERAR TOMAR TOMATE TONELADA TONO TONTERIA TOPO TOQUE TORMENTA TORNILLO TORO
-        TORPE TORRE TORTA TORTILLA TORTUGA TOS TRABAJAR TRACTOR TRADICION TRADUCIR TRAER TRAFICO TRAGEDIA TRAJE TRAMPA TRANQUILO
-        TRANSFORMAR TRANSITO TRANSPORTE TRAPO TRASERO TRATAMIENTO TRATAR TRAVESURA TREBOL TRECE TREINTA TREN TRENZA TREPAR TRIANGULO TRIBU
-        TRIBUNAL TRIGO TRISTE TRIUNFO TROZO TRUCO TRUENO TUBO TUMBA TUNEL TURISMO TURNO ULTIMO UMBRAL UNIDAD UNIFORME
-        UNION UNIR UNIVERSO UNO URGENTE USAR UTIL UVA VACACIONES VACIO VAGON VALIENTE VALLE VALOR VAPOR VARIEDAD
-        VARON VASO VECINO VEHICULO VEINTE VELA VELOCIDAD VENA VENCER VENDA VENDER VENENO VENGANZA VENIR VENTANA VERANO
-        VERDAD VERDE VERDURA VERGUENZA VERSION VERTIGO VESTIDO VESTIR VIAJE VIBORA VICTORIA VIDA VIDRIO VIEJO VIENTO VIENTRE
-        VIERNES VIGILAR VINAGRE VINO VIOLENCIA VIOLIN VIRTUD VISITA VISTA VIUDA VIVIENDA VIVIR VOCAL VOLAR VOLCAN VOLUMEN
-        VOLUNTAD VOLVER VOTO VOZ VUELO VUELTA YEMA YERNO YESO YOGUR ZANAHORIA ZAPATO ZARZA ZONA ZORRO ZUMO
-        `;
+      <div id="lettersKeyboard" class="keyboard"></div>
 
-        const DICTIONARY = Array.from(new Set(
-            RAW_DICTIONARY.trim().split(/\s+/)
-                .map(w => w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase())
-                .filter(w => w.length >= 2 && w.length <= 10 && /^[A-ZÑ]+$/.test(w))
-        ));
-        const DICTIONARY_SET = new Set(DICTIONARY);
+      <div class="row">
+        <button id="submitWordBtn" class="btn-primary" type="button" style="flex:1;">Enviar palabra</button>
+        <button id="finishLettersRoundBtn" class="btn-success" type="button">Resolver ronda</button>
+      </div>
 
-        /* ============================================================================
-           ESTADO GLOBAL DEL JUEGO
-           ============================================================================ */
-        const ROUND_SECONDS = 45;
+      <div>
+        <div class="muted" style="margin-bottom:4px;">Palabras enviadas en esta ronda:</div>
+        <div id="submittedWordsList" class="chips-list">
+          <span class="muted">Ninguna enviada aún</span>
+        </div>
+      </div>
 
-        const gameState = {
-            mode: 'full',          // 'full' | 'cifras' | 'letras'
-            difficulty: 'pro',     // 'amateur' | 'pro' | 'genius'
-            timerEnabled: true,    // true = 45s | false = Infinito
-            currentRound: 1,
-            totalRounds: 10,
-            playerScore: 0,
-            aiScore: 0,
-            history: [],
-            timerInterval: null,
-            timeLeft: ROUND_SECONDS,
-            activeTimerPrefix: null,
-            activeTimerCallback: null,
-            roundType: 'cifras'
-        };
+      <div id="lettersResult" class="result-box hidden"></div>
+    </section>
 
-        const cifrasState = {
-            target: 0,
-            initialNumbers: [],
-            tiles: [],             // { id, value, used, isComputed }
-            selectedTileId: null,
-            selectedOp: null,
-            steps: [],
-            savedAttempts: [],
-            nextId: 100
-        };
+    <!-- PRUEBA DE CIFRAS -->
+    <section id="numbersView" class="card hidden">
+      <div class="row">
+        <strong>🔢 Prueba de Cifras</strong>
+        <button id="numbersBackBtn" class="btn-secondary" type="button">Menú</button>
+      </div>
 
-        const letrasState = {
-            letters: [],           // array de 10 caracteres
-            usedIndices: [],       // índices marcados actualmente en orden
-            sentWords: [],
-            isDealing: true
-        };
+      <div class="target-box">
+        <div class="muted">Objetivo a alcanzar</div>
+        <div id="targetNumberDisplay" class="target-num">000</div>
+      </div>
 
-        /* ============================================================================
-           INICIALIZACIÓN, RELOJ (45s / INFINITO + DOBLE TOQUE) Y NAVEGACIÓN
-           ============================================================================ */
-        function showToast(emoji, text) {
-            const banner = document.getElementById('toastBanner');
-            document.getElementById('toastEmoji').textContent = emoji;
-            document.getElementById('toastText').textContent = text;
-            banner.classList.remove('opacity-0', '-translate-y-2');
-            clearTimeout(window._toastTimeout);
-            window._toastTimeout = setTimeout(() => {
-                banner.classList.add('opacity-0', '-translate-y-2');
-            }, 2200);
+      <div id="numberTiles" class="num-tiles"></div>
+
+      <div class="ops-row">
+        <button class="op-btn" data-op="+" type="button">+</button>
+        <button class="op-btn" data-op="-" type="button">−</button>
+        <button class="op-btn" data-op="*" type="button">×</button>
+        <button class="op-btn" data-op="/" type="button">÷</button>
+        <button class="op-btn" data-op="(" type="button">(</button>
+        <button class="op-btn" data-op=")" type="button">)</button>
+      </div>
+
+      <div class="expr-box">
+        <span id="exprDisplay">Toca fichas y operaciones</span>
+        <div class="row">
+          <button id="backspaceExprBtn" class="btn-warn" type="button">Atrás</button>
+          <button id="clearExprBtn" class="btn-secondary" type="button">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="saveCalcBtn" class="btn-primary" type="button" style="flex:1;">Guardar cálculo</button>
+        <button id="finishNumbersRoundBtn" class="btn-success" type="button">Resolver ronda</button>
+      </div>
+
+      <div>
+        <div class="muted" style="margin-bottom:4px;">Cálculos guardados en esta ronda:</div>
+        <div id="savedCalcsList" class="chips-list">
+          <span class="muted">Ningún cálculo guardado aún</span>
+        </div>
+      </div>
+
+      <div id="numbersResult" class="result-box hidden"></div>
+    </section>
+  </div>
+
+  <script>
+    const ROUND_SECONDS = 45;
+    const VOWELS = ["A", "E", "I", "O", "U"];
+    const CONSONANTS = [
+      "B", "C", "D", "F", "G", "H", "J", "L", "M",
+      "N", "Ñ", "P", "Q", "R", "S", "T", "V", "X", "Y", "Z"
+    ];
+    const BIG_NUMBERS = [25, 50, 75, 100];
+    const SMALL_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+
+    const AI_WORDS = [
+      "PARTIDO", "CALLE", "CAMINO", "TIEMPO", "CIUDAD", "MONTAÑA", "RIO",
+      "NOCHE", "ESTRELLAS", "LIBRO", "MESA", "SILLA", "PUERTA", "VENTANA",
+      "ARBOL", "FLORES", "AGUA", "FUEGO", "TIERRA", "VIENTO", "SOL", "LUNA",
+      "AMIGO", "FAMILIA", "TRABAJO", "JUEGO", "MUSICA", "HISTORIA", "VERDAD",
+      "CAMPO", "PLAYA", "COCHE", "TREN", "BARCO", "AVION", "CASA", "HOGAR",
+      "PAN", "LECHE", "QUESO", "FRUTA", "DULCE", "SABOR", "COCINA", "MESON",
+      "PLAZA", "TORRE", "PUENTE", "BOSQUE", "VALLE", "NIEVE", "LLUVIA", "BRISA"
+    ];
+
+    const state = {
+      view: "menu",
+      scoreYou: 0,
+      scoreAi: 0,
+      infiniteTime: false,
+      timeLeft: ROUND_SECONDS,
+      timerId: null,
+      roundEnded: false,
+
+      // Letras
+      letterTiles: [], // { id, char, usedOrder }
+      selectedTileIds: [],
+      submittedWords: [],
+
+      // Cifras
+      targetNumber: 0,
+      numberTiles: [], // { id, value, usedOrder }
+      exprTokens: [], // { type: 'num'|'op', tileId?, value, label }
+      savedCalcs: []
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function updateTimeUI() {
+      const badge = $("timerBadge");
+      const btn = $("toggleTimeModeBtn");
+      const menuBtn = $("menuSwitchTimeBtn");
+      const menuLabel = $("menuTimeLabel");
+
+      if (state.infiniteTime) {
+        badge.textContent = "♾️ ∞";
+        badge.classList.remove("danger");
+        btn.textContent = "Modo: Sin tiempo";
+        menuBtn.textContent = "Cambiar a 45 segundos";
+        menuLabel.textContent = "Sin tiempo (∞)";
+      } else {
+        badge.textContent = `⏱️ ${state.timeLeft}s`;
+        badge.classList.toggle("danger", state.timeLeft <= 10 && !state.roundEnded);
+        btn.textContent = "Modo: 45s";
+        menuBtn.textContent = "Cambiar a Sin tiempo (∞)";
+        menuLabel.textContent = "45 segundos";
+      }
+    }
+
+    function stopTimer() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+      state.timeLeft = ROUND_SECONDS;
+      updateTimeUI();
+      if (state.infiniteTime) return;
+
+      state.timerId = setInterval(() => {
+        if (state.infiniteTime || state.roundEnded) return;
+        state.timeLeft -= 1;
+        updateTimeUI();
+        if (state.timeLeft <= 0) {
+          stopTimer();
+          if (state.view === "letters") resolveLettersRound(true);
+          if (state.view === "numbers") resolveNumbersRound(true);
+        }
+      }, 1000);
+    }
+
+    function toggleInfiniteMode() {
+      state.infiniteTime = !state.infiniteTime;
+      if (!state.infiniteTime && state.view !== "menu" && !state.roundEnded) {
+        if (state.timeLeft <= 0) state.timeLeft = ROUND_SECONDS;
+        startTimer();
+      } else if (state.infiniteTime) {
+        stopTimer();
+      }
+      updateTimeUI();
+    }
+
+    function showView(viewName) {
+      state.view = viewName;
+      $("menuView").classList.toggle("hidden", viewName !== "menu");
+      $("lettersView").classList.toggle("hidden", viewName !== "letters");
+      $("numbersView").classList.toggle("hidden", viewName !== "numbers");
+      if (viewName === "menu") {
+        stopTimer();
+        state.roundEnded = false;
+        updateTimeUI();
+      }
+    }
+
+    function updateScoresUI() {
+      $("scoreYou").textContent = state.scoreYou;
+      $("scoreAi").textContent = state.scoreAi;
+    }
+
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // ================= LETRAS =================
+    function generateLetterRack() {
+      const tiles = [];
+      for (let i = 0; i < 3; i++) {
+        tiles.push({ id: `L${i}`, char: randomItem(VOWELS), usedOrder: null });
+      }
+      for (let i = 3; i < 9; i++) {
+        tiles.push({ id: `L${i}`, char: randomItem(CONSONANTS), usedOrder: null });
+      }
+      // Mezclar ligeramente manteniendo equilibrio
+      for (let i = tiles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+      }
+      tiles.forEach((t, idx) => { t.id = `L${idx}`; });
+      return tiles;
+    }
+
+    function syncLetterOrder() {
+      state.letterTiles.forEach((t) => {
+        const pos = state.selectedTileIds.indexOf(t.id);
+        t.usedOrder = pos >= 0 ? pos + 1 : null;
+      });
+    }
+
+    function renderLetters() {
+      syncLetterOrder();
+      const container = $("letterTiles");
+      container.innerHTML = "";
+
+      state.letterTiles.forEach((tile) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "letter-tile" + (tile.usedOrder ? " used" : "");
+        btn.textContent = tile.char;
+        btn.disabled = state.roundEnded;
+
+        if (tile.usedOrder) {
+          const badge = document.createElement("span");
+          badge.className = "order-tag";
+          badge.textContent = tile.usedOrder;
+          btn.appendChild(badge);
         }
 
-        function setDifficulty(level) {
-            gameState.difficulty = level;
-            document.querySelectorAll('.diff-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white', 'shadow');
-                btn.classList.add('text-slate-400');
-            });
-            const activeBtn = document.getElementById(`diff-${level}`);
-            activeBtn.classList.remove('text-slate-400');
-            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow');
-        }
-
-        function setTimerMode(enabled) {
-            if (gameState.timerEnabled === enabled) return;
-            gameState.timerEnabled = enabled;
-            syncTimerModeUI();
-
-            // Si estamos en mitad de una prueba activa, aplicar el cambio al vuelo
-            const inCifrasPlay = !document.getElementById('cifrasScreen').classList.contains('hidden') && !document.getElementById('cifrasPlayPanel').classList.contains('hidden');
-            const inLetrasPlay = !document.getElementById('letrasScreen').classList.contains('hidden') && !letrasState.isDealing;
-
-            if (inCifrasPlay || inLetrasPlay) {
-                const prefix = inCifrasPlay ? 'cifras' : 'letras';
-                const callback = inCifrasPlay ? finishCifrasRound : finishLetrasRound;
-                if (gameState.timerEnabled) {
-                    const startFrom = gameState.timeLeft > 0 ? gameState.timeLeft : ROUND_SECONDS;
-                    startTimer(startFrom, prefix, callback);
-                    showToast('⏱️', `Reloj activado (${startFrom}s)`);
-                } else {
-                    clearInterval(gameState.timerInterval);
-                    updateTimerDisplayForMode(prefix);
-                    showToast('♾️', 'Modo Infinito activado (sin tiempo)');
-                }
-            } else {
-                showToast(enabled ? '⏱️' : '♾️', enabled ? 'Modo Con tiempo (45 segundos)' : 'Modo Sin tiempo (Infinito)');
-            }
-        }
-
-        function toggleTimerMode() {
-            setTimerMode(!gameState.timerEnabled);
-        }
-
-        function syncTimerModeUI() {
-            const is45 = gameState.timerEnabled;
-            // Botones cabecera
-            const hdr45 = document.getElementById('hdrTime45Btn');
-            const hdrInf = document.getElementById('hdrTimeInfBtn');
-            hdr45.className = is45
-                ? 'px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold transition bg-amber-500 text-slate-950 shadow'
-                : 'px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold transition text-slate-300 hover:text-white';
-            hdrInf.className = !is45
-                ? 'px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold transition bg-blue-500 text-white shadow'
-                : 'px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold transition text-slate-300 hover:text-white';
-
-            // Botones menú
-            const menu45 = document.getElementById('menuTime45Btn');
-            const menuInf = document.getElementById('menuTimeInfBtn');
-            if (menu45 && menuInf) {
-                menu45.className = is45
-                    ? 'py-1.5 px-2 rounded-lg text-xs font-extrabold transition bg-amber-500 text-slate-950 shadow'
-                    : 'py-1.5 px-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
-                menuInf.className = !is45
-                    ? 'py-1.5 px-2 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow'
-                    : 'py-1.5 px-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white';
-            }
-
-            updateTimerDisplayForMode('cifras');
-            updateTimerDisplayForMode('letras');
-        }
-
-        function updateTimerDisplayForMode(prefix) {
-            const textEl = document.getElementById(`${prefix}TimerText`);
-            const iconEl = document.getElementById(`${prefix}TimerIcon`);
-            const barEl = document.getElementById(`${prefix}ProgressBar`);
-            if (!textEl || !iconEl || !barEl) return;
-
-            if (gameState.timerEnabled) {
-                iconEl.textContent = '⏱️';
-                textEl.textContent = `${gameState.timeLeft}s`;
-                barEl.classList.remove('bg-blue-400');
-                barEl.classList.add(prefix === 'cifras' ? 'bg-amber-400' : 'bg-emerald-400');
-            } else {
-                iconEl.textContent = '♾️';
-                textEl.textContent = '∞';
-                barEl.style.width = '100%';
-                barEl.classList.remove('bg-amber-400', 'bg-emerald-400', 'bg-rose-500');
-                barEl.classList.add('bg-blue-400');
-            }
-        }
-
-        // Configurar doble toque (táctil y ratón) en los cuadros del temporizador
-        function bindDoubleTapTimer(elementId) {
-            const el = document.getElementById(elementId);
-            if (!el) return;
-            let lastTap = 0;
-            el.addEventListener('click', () => {
-                const now = Date.now();
-                if (now - lastTap < 350) {
-                    toggleTimerMode();
-                    lastTap = 0;
-                } else {
-                    lastTap = now;
-                }
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            bindDoubleTapTimer('cifrasTimerBox');
-            bindDoubleTapTimer('letrasTimerBox');
-            syncTimerModeUI();
+        btn.addEventListener("click", () => {
+          if (state.roundEnded) return;
+          const idx = state.selectedTileIds.indexOf(tile.id);
+          if (idx >= 0) {
+            state.selectedTileIds.splice(idx, 1);
+          } else {
+            state.selectedTileIds.push(tile.id);
+          }
+          renderLetters();
         });
 
-        function hideAllScreens() {
-            ['startScreen', 'cifrasScreen', 'letrasScreen', 'roundResultScreen', 'finalSummaryScreen'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
+        container.appendChild(btn);
+      });
+
+      const word = state.selectedTileIds
+        .map((id) => state.letterTiles.find((t) => t.id === id)?.char || "")
+        .join("");
+      $("currentWordDisplay").textContent = word || "---";
+
+      // Teclado con estado visual según disponibilidad y uso
+      const kb = $("lettersKeyboard");
+      kb.innerHTML = "";
+      const freeChars = new Set(
+        state.letterTiles.filter((t) => !t.usedOrder).map((t) => t.char)
+      );
+      const markedChars = new Set(
+        state.letterTiles.filter((t) => t.usedOrder).map((t) => t.char)
+      );
+
+      ALPHABET.forEach((ch) => {
+        const key = document.createElement("button");
+        key.type = "button";
+        key.textContent = ch;
+        key.className = "key-btn";
+        if (markedChars.has(ch) && !freeChars.has(ch)) {
+          key.classList.add("marked");
+        } else if (freeChars.has(ch)) {
+          key.classList.add("available");
+        }
+        key.disabled = state.roundEnded || !freeChars.has(ch);
+        key.addEventListener("click", () => {
+          const freeTile = state.letterTiles.find((t) => t.char === ch && !t.usedOrder);
+          if (freeTile) {
+            state.selectedTileIds.push(freeTile.id);
+            renderLetters();
+          }
+        });
+        kb.appendChild(key);
+      });
+
+      // Palabras enviadas
+      const list = $("submittedWordsList");
+      list.innerHTML = "";
+      if (state.submittedWords.length === 0) {
+        list.innerHTML = '<span class="muted">Ninguna enviada aún</span>';
+      } else {
+        state.submittedWords.forEach((w) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = `${w} (${w.length} pts)`;
+          list.appendChild(chip);
+        });
+      }
+    }
+
+    function canFormWordFromRack(word, rack) {
+      const pool = rack.map((t) => t.char);
+      for (const ch of word.toUpperCase()) {
+        const idx = pool.indexOf(ch);
+        if (idx === -1) return false;
+        pool.splice(idx, 1);
+      }
+      return true;
+    }
+
+    function startLettersRound() {
+      state.roundEnded = false;
+      state.letterTiles = generateLetterRack();
+      state.selectedTileIds = [];
+      state.submittedWords = [];
+      $("lettersResult").classList.add("hidden");
+      $("lettersResult").innerHTML = "";
+      showView("letters");
+      renderLetters();
+      startTimer();
+    }
+
+    function submitWord() {
+      if (state.roundEnded) return;
+      const word = state.selectedTileIds
+        .map((id) => state.letterTiles.find((t) => t.id === id)?.char || "")
+        .join("")
+        .trim();
+
+      if (word.length < 2) return;
+      if (!state.submittedWords.includes(word)) {
+        state.submittedWords.push(word);
+      }
+      state.selectedTileIds = [];
+      renderLetters();
+    }
+
+    function resolveLettersRound(byTimeout = false) {
+      if (state.roundEnded) return;
+      state.roundEnded = true;
+      stopTimer();
+      renderLetters();
+
+      const bestPlayerWord = state.submittedWords.reduce(
+        (best, w) => (w.length > best.length ? w : best),
+        ""
+      );
+      const playerPts = bestPlayerWord.length;
+
+      const validAiWords = AI_WORDS.filter((w) => canFormWordFromRack(w, state.letterTiles));
+      const aiWord = validAiWords.length
+        ? validAiWords.reduce((a, b) => (b.length > a.length ? b : a), "")
+        : state.letterTiles.slice(0, 4).map((t) => t.char).join("");
+      const aiPts = aiWord.length;
+
+      if (playerPts > aiPts) {
+        state.scoreYou += playerPts;
+      } else if (aiPts > playerPts) {
+        state.scoreAi += aiPts;
+      } else if (playerPts > 0) {
+        state.scoreYou += playerPts;
+        state.scoreAi += aiPts;
+      }
+      updateScoresUI();
+
+      const box = $("lettersResult");
+      box.classList.remove("hidden");
+      box.innerHTML = `
+        <div><strong>${byTimeout ? "Tiempo agotado." : "Ronda resuelta."}</strong></div>
+        <div>Tu mejor palabra: <strong>${bestPlayerWord || "Ninguna"}</strong> (${playerPts} pts)</div>
+        <div>Palabra de la IA: <strong>${aiWord}</strong> (${aiPts} pts)</div>
+        <div style="margin-top:8px;">
+          <button id="nextLettersBtn" class="btn-primary" type="button">Nueva ronda de Letras</button>
+        </div>
+      `;
+      $("nextLettersBtn").addEventListener("click", startLettersRound);
+    }
+
+    // ================= CIFRAS =================
+    function generateNumbersRound() {
+      const target = Math.floor(Math.random() * 899) + 101; // 101 - 999
+      const chosen = [];
+      const bigCount = Math.random() < 0.7 ? 2 : 1;
+      const bigPool = [...BIG_NUMBERS];
+      for (let i = 0; i < bigCount; i++) {
+        const idx = Math.floor(Math.random() * bigPool.length);
+        chosen.push(bigPool.splice(idx, 1)[0]);
+      }
+      while (chosen.length < 6) {
+        chosen.push(randomItem(SMALL_NUMBERS));
+      }
+      return {
+        target,
+        tiles: chosen.map((val, idx) => ({ id: `N${idx}`, value: val, usedOrder: null }))
+      };
+    }
+
+    function syncNumberOrder() {
+      const usedIds = state.exprTokens.filter((tk) => tk.type === "num").map((tk) => tk.tileId);
+      state.numberTiles.forEach((t) => {
+        const pos = usedIds.indexOf(t.id);
+        t.usedOrder = pos >= 0 ? pos + 1 : null;
+      });
+    }
+
+    function evaluateExpr(tokens) {
+      if (!tokens.length) return null;
+      const raw = tokens.map((t) => (t.type === "num" ? String(t.value) : t.value)).join(" ");
+      if (!/^[0-9+\-*/()\s]+$/.test(raw)) return null;
+      try {
+        const val = Function(`"use strict"; return (${raw});`)();
+        if (typeof val !== "number" || !Number.isFinite(val) || !Number.isInteger(val) || val < 0) {
+          return null;
+        }
+        return val;
+      } catch {
+        return null;
+      }
+    }
+
+    function renderNumbers() {
+      syncNumberOrder();
+      $("targetNumberDisplay").textContent = state.targetNumber;
+
+      const grid = $("numberTiles");
+      grid.innerHTML = "";
+      state.numberTiles.forEach((tile) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "num-tile" + (tile.usedOrder ? " used" : "");
+        btn.textContent = tile.value;
+        btn.disabled = state.roundEnded || Boolean(tile.usedOrder);
+
+        if (tile.usedOrder) {
+          const badge = document.createElement("span");
+          badge.className = "order-tag";
+          badge.textContent = tile.usedOrder;
+          btn.appendChild(badge);
         }
 
-        function startGame(mode) {
-            gameState.mode = mode;
-            gameState.totalRounds = mode === 'full' ? 10 : 5;
-            gameState.currentRound = 1;
-            gameState.playerScore = 0;
-            gameState.aiScore = 0;
-            gameState.history = [];
-
-            updateHeaderUI();
-            document.getElementById('roundBadge').classList.remove('hidden');
-            document.getElementById('scoreboard').classList.remove('hidden');
-            document.getElementById('restartBtn').classList.remove('hidden');
-
-            startCurrentRound();
-        }
-
-        function updateHeaderUI() {
-            document.getElementById('currentRoundNum').textContent = gameState.currentRound;
-            document.getElementById('totalRoundsNum').textContent = gameState.totalRounds;
-            document.getElementById('playerScore').textContent = gameState.playerScore;
-            document.getElementById('aiScore').textContent = gameState.aiScore;
-        }
-
-        function startCurrentRound() {
-            clearInterval(gameState.timerInterval);
-            gameState.timeLeft = ROUND_SECONDS;
-            hideAllScreens();
-            updateHeaderUI();
-
-            if (gameState.mode === 'cifras') {
-                gameState.roundType = 'cifras';
-            } else if (gameState.mode === 'letras') {
-                gameState.roundType = 'letras';
-            } else {
-                gameState.roundType = (gameState.currentRound % 2 === 1) ? 'cifras' : 'letras';
-            }
-
-            if (gameState.roundType === 'cifras') {
-                initCifrasRound();
-            } else {
-                initLetrasRound();
-            }
-        }
-
-        function confirmResetModal() {
-            document.getElementById('resetModal').classList.remove('hidden');
-        }
-        function closeResetModal() {
-            document.getElementById('resetModal').classList.add('hidden');
-        }
-        function returnToMenu() {
-            clearInterval(gameState.timerInterval);
-            closeResetModal();
-            hideAllScreens();
-            document.getElementById('roundBadge').classList.add('hidden');
-            document.getElementById('scoreboard').classList.add('hidden');
-            document.getElementById('restartBtn').classList.add('hidden');
-            document.getElementById('startScreen').classList.remove('hidden');
-        }
-
-        /* ============================================================================
-           PRUEBA DE CIFRAS: MÚLTIPLES INTENTOS + CALCULADORA + SOLVER ÓPTIMO
-           ============================================================================ */
-        function initCifrasRound() {
-            gameState.timeLeft = ROUND_SECONDS;
-            document.getElementById('cifrasScreen').classList.remove('hidden');
-            document.getElementById('cifrasSetupPanel').classList.remove('hidden');
-            document.getElementById('cifrasPlayPanel').classList.add('hidden');
-            document.getElementById('cifrasTarget').textContent = '---';
-            document.getElementById('cifrasProgressBar').style.width = '100%';
-            updateTimerDisplayForMode('cifras');
-        }
-
-        function dealCifras(numLarge) {
-            const largePool = [25, 50, 75, 100];
-            const smallPool = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10];
-
-            shuffleArray(largePool);
-            shuffleArray(smallPool);
-
-            if (numLarge === -1) {
-                numLarge = Math.floor(Math.random() * 5);
-            }
-            const numSmall = 6 - numLarge;
-
-            const chosen = [
-                ...largePool.slice(0, numLarge),
-                ...smallPool.slice(0, numSmall)
-            ];
-            shuffleArray(chosen);
-
-            const target = Math.floor(Math.random() * 899) + 101;
-
-            cifrasState.target = target;
-            cifrasState.initialNumbers = [...chosen];
-            cifrasState.savedAttempts = [];
-            resetCifrasStateArrays();
-
-            document.getElementById('cifrasTarget').textContent = target;
-            document.getElementById('cifrasSetupPanel').classList.add('hidden');
-            document.getElementById('cifrasPlayPanel').classList.remove('hidden');
-
-            renderCifrasBoard();
-            renderCifrasAttempts();
-
-            gameState.timeLeft = ROUND_SECONDS;
-            if (gameState.timerEnabled) {
-                startTimer(ROUND_SECONDS, 'cifras', () => {
-                    showToast('⏰', '¡Tiempo agotado en Cifras!');
-                    finishCifrasRound();
-                });
-            } else {
-                updateTimerDisplayForMode('cifras');
-            }
-        }
-
-        function resetCifrasStateArrays() {
-            cifrasState.tiles = cifrasState.initialNumbers.map((val, idx) => ({
-                id: idx + 1,
-                value: val,
-                used: false,
-                isComputed: false
-            }));
-            cifrasState.selectedTileId = null;
-            cifrasState.selectedOp = null;
-            cifrasState.steps = [];
-            cifrasState.nextId = 100;
-        }
-
-        function resetCifrasBoard() {
-            resetCifrasStateArrays();
-            renderCifrasBoard();
-        }
-
-        function getCurrentBoardBestCandidate() {
-            if (cifrasState.steps.length > 0) {
-                let bestStep = cifrasState.steps[0];
-                let bestDiff = Math.abs(cifrasState.target - bestStep.resVal);
-                for (const s of cifrasState.steps) {
-                    const d = Math.abs(cifrasState.target - s.resVal);
-                    if (d < bestDiff) {
-                        bestDiff = d;
-                        bestStep = s;
-                    }
-                }
-                return {
-                    value: bestStep.resVal,
-                    diff: bestDiff,
-                    steps: cifrasState.steps.map(st => st.text)
-                };
-            }
-            if (cifrasState.selectedTileId !== null) {
-                const t = cifrasState.tiles.find(x => x.id === cifrasState.selectedTileId);
-                if (t) {
-                    return {
-                        value: t.value,
-                        diff: Math.abs(cifrasState.target - t.value),
-                        steps: [`Ficha directa: ${t.value}`]
-                    };
-                }
-            }
-            return null;
-        }
-
-        function saveCifrasAttempt() {
-            const candidate = getCurrentBoardBestCandidate();
-            if (!candidate) {
-                showToast('👆', 'Realiza al menos una operación antes de guardar.');
-                return;
-            }
-
-            const alreadyExists = cifrasState.savedAttempts.some(a => a.value === candidate.value);
-            if (!alreadyExists) {
-                cifrasState.savedAttempts.push(candidate);
-                cifrasState.savedAttempts.sort((a, b) => a.diff - b.diff);
-            } else {
-                showToast('ℹ️', `Ya tenías guardado el ${candidate.value}. Tablero limpio.`);
-            }
-
-            if (candidate.diff === 0) {
-                showToast('🎯', `¡Exacto ${candidate.value} guardado! Puedes finalizar o seguir.`);
-            } else if (!alreadyExists) {
-                showToast('💾', `Guardado ${candidate.value} (a ${candidate.diff}). ¡Sigue probando!`);
-            }
-
-            resetCifrasStateArrays();
-            renderCifrasBoard();
-            renderCifrasAttempts();
-        }
-
-        function renderCifrasAttempts() {
-            const countEl = document.getElementById('cifrasAttemptsCount');
-            const listEl = document.getElementById('cifrasAttemptsList');
-            countEl.textContent = cifrasState.savedAttempts.length;
-
-            if (cifrasState.savedAttempts.length === 0) {
-                listEl.innerHTML = '<span class="text-[11px] text-slate-500 italic">Aún no has guardado ningún cálculo...</span>';
-                return;
-            }
-
-            listEl.innerHTML = cifrasState.savedAttempts.map((att, idx) => {
-                const isBest = idx === 0;
-                const badgeStyle = att.diff === 0
-                    ? 'bg-amber-400 text-slate-950 border-amber-300 font-black'
-                    : isBest
-                    ? 'bg-emerald-500/25 text-emerald-200 border-emerald-400/60 font-bold'
-                    : 'bg-slate-800 text-slate-300 border-slate-700';
-                const label = att.diff === 0 ? `${att.value} 🎯` : `${att.value} (a ${att.diff})`;
-                return `<span class="shrink-0 px-2 py-0.5 rounded-md border text-[11px] font-mono-num ${badgeStyle}">${label}</span>`;
-            }).join('');
-        }
-
-        function renderCifrasBoard() {
-            const container = document.getElementById('cifrasTilesContainer');
-            container.innerHTML = '';
-
-            cifrasState.tiles.forEach(tile => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.disabled = tile.used;
-                const isSelected = tile.id === cifrasState.selectedTileId;
-
-                let classes = 'tile-card rounded-xl py-2 sm:py-3 px-1 font-mono-num text-base sm:text-2xl font-black flex items-center justify-center ';
-                if (tile.used) classes += 'tile-used-number ';
-                else if (isSelected) classes += 'tile-selected ';
-                else if (tile.isComputed) classes += 'tile-computed ';
-
-                btn.className = classes;
-                btn.textContent = tile.value;
-                btn.onclick = () => onTileClick(tile.id);
-                container.appendChild(btn);
-            });
-
-            ['+', '-', '*', '/'].forEach(op => {
-                const opBtn = document.getElementById(`op-${op}`);
-                if (cifrasState.selectedOp === op) {
-                    opBtn.classList.add('ring-2', 'ring-amber-400', 'bg-amber-500', 'text-slate-950');
-                    opBtn.classList.remove('bg-blue-600', 'text-white');
-                } else {
-                    opBtn.classList.remove('ring-2', 'ring-amber-400', 'bg-amber-500', 'text-slate-950');
-                    opBtn.classList.add('bg-blue-600', 'text-white');
-                }
-            });
-
-            const stepsList = document.getElementById('cifrasStepsList');
-            if (cifrasState.steps.length === 0) {
-                stepsList.innerHTML = '<li class="text-slate-500 italic font-sans text-[11px]">Pulsa una ficha para calcular...</li>';
-            } else {
-                stepsList.innerHTML = cifrasState.steps.map((s, i) => `
-                    <li class="flex items-center justify-between bg-slate-900/90 px-2 py-0.5 rounded border border-slate-800">
-                        <span><span class="text-slate-500 mr-1.5">${i + 1}.</span>${s.text}</span>
-                        ${s.resVal === cifrasState.target ? '<span class="text-[10px] font-sans font-bold text-amber-400">🎯 EXACTO</span>' : ''}
-                    </li>
-                `).join('');
-            }
-
-            const previewEl = document.getElementById('currentExpressionPreview');
-            if (cifrasState.selectedTileId !== null) {
-                const firstTile = cifrasState.tiles.find(t => t.id === cifrasState.selectedTileId);
-                const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[cifrasState.selectedOp] || '';
-                previewEl.textContent = `En curso: ${firstTile.value} ${opSymbol}`;
-            } else {
-                previewEl.textContent = '';
-            }
-
-            const overallBest = getOverallPlayerBestCifras();
-            const bestEl = document.getElementById('cifrasBestSoFar');
-            if (!overallBest) {
-                bestEl.textContent = 'Ninguno';
-            } else {
-                bestEl.textContent = overallBest.diff === 0 ? `${overallBest.value} (Exacto)` : `${overallBest.value} (a ${overallBest.diff})`;
-            }
-        }
-
-        function onTileClick(tileId) {
-            const tile = cifrasState.tiles.find(t => t.id === tileId);
-            if (!tile || tile.used) return;
-
-            if (cifrasState.selectedTileId === null || cifrasState.selectedOp === null) {
-                cifrasState.selectedTileId = tileId;
-                renderCifrasBoard();
-                return;
-            }
-
-            if (cifrasState.selectedTileId === tileId) {
-                cifrasState.selectedTileId = null;
-                cifrasState.selectedOp = null;
-                renderCifrasBoard();
-                return;
-            }
-
-            const firstTile = cifrasState.tiles.find(t => t.id === cifrasState.selectedTileId);
-            const a = firstTile.value;
-            const b = tile.value;
-            const op = cifrasState.selectedOp;
-
-            let res = null;
-            let opSymbol = '';
-
-            if (op === '+') {
-                res = a + b;
-                opSymbol = '+';
-            } else if (op === '-') {
-                if (a - b <= 0) {
-                    showToast('⚠️', 'En Cifras no se permiten ceros ni negativos.');
-                    return;
-                }
-                res = a - b;
-                opSymbol = '−';
-            } else if (op === '*') {
-                res = a * b;
-                opSymbol = '×';
-            } else if (op === '/') {
-                if (b === 0 || a % b !== 0) {
-                    showToast('⚠️', 'La división debe ser exacta.');
-                    return;
-                }
-                res = a / b;
-                opSymbol = '÷';
-            }
-
-            firstTile.used = true;
-            tile.used = true;
-            const newId = cifrasState.nextId++;
-            cifrasState.tiles.push({
-                id: newId,
-                value: res,
-                used: false,
-                isComputed: true
-            });
-
-            cifrasState.steps.push({
-                aId: firstTile.id,
-                aVal: a,
-                op,
-                bId: tile.id,
-                bVal: b,
-                resId: newId,
-                resVal: res,
-                text: `${a} ${opSymbol} ${b} = ${res}`
-            });
-
-            cifrasState.selectedTileId = null;
-            cifrasState.selectedOp = null;
-            renderCifrasBoard();
-
-            if (res === cifrasState.target) {
-                showToast('🎯', `¡Has clavado el ${cifrasState.target}! Guarda o finaliza.`);
-            }
-        }
-
-        function selectOperator(op) {
-            if (cifrasState.selectedTileId === null) {
-                showToast('👆', 'Primero pulsa una ficha numérica.');
-                return;
-            }
-            cifrasState.selectedOp = op;
-            renderCifrasBoard();
-        }
-
-        function undoCifrasStep() {
-            if (cifrasState.steps.length === 0) return;
-            const lastStep = cifrasState.steps.pop();
-            cifrasState.tiles = cifrasState.tiles.filter(t => t.id !== lastStep.resId);
-            const tileA = cifrasState.tiles.find(t => t.id === lastStep.aId);
-            const tileB = cifrasState.tiles.find(t => t.id === lastStep.bId);
-            if (tileA) tileA.used = false;
-            if (tileB) tileB.used = false;
-            cifrasState.selectedTileId = null;
-            cifrasState.selectedOp = null;
-            renderCifrasBoard();
-        }
-
-        function getOverallPlayerBestCifras() {
-            const allCandidates = [...cifrasState.savedAttempts];
-            const currentBoard = getCurrentBoardBestCandidate();
-            if (currentBoard) {
-                allCandidates.push(currentBoard);
-            }
-
-            if (allCandidates.length === 0 && cifrasState.initialNumbers.length > 0) {
-                let bestInit = cifrasState.initialNumbers[0];
-                let bestDiff = Math.abs(cifrasState.target - bestInit);
-                for (const val of cifrasState.initialNumbers) {
-                    const d = Math.abs(cifrasState.target - val);
-                    if (d < bestDiff) {
-                        bestDiff = d;
-                        bestInit = val;
-                    }
-                }
-                return { value: bestInit, diff: bestDiff, steps: [`Ficha inicial: ${bestInit}`] };
-            }
-
-            if (allCandidates.length === 0) return null;
-
-            allCandidates.sort((a, b) => a.diff - b.diff);
-            return allCandidates[0];
-        }
-
-        /* ALGORITMO SOLVER DE CIFRAS */
-        function solveCifras(numbers, target) {
-            let bestVal = numbers[0];
-            let bestDiff = Math.abs(target - bestVal);
-            let bestSteps = [];
-            let exactFound = false;
-
-            for (const n of numbers) {
-                const d = Math.abs(target - n);
-                if (d < bestDiff) {
-                    bestDiff = d;
-                    bestVal = n;
-                    bestSteps = [];
-                }
-                if (d === 0) return { value: n, diff: 0, steps: [] };
-            }
-
-            const visited = new Set();
-
-            function dfs(items, steps) {
-                if (exactFound || items.length <= 1) return;
-
-                const stateKey = items.map(x => x.val).sort((a, b) => a - b).join(',');
-                if (visited.has(stateKey)) return;
-                visited.add(stateKey);
-
-                const n = items.length;
-                for (let i = 0; i < n; i++) {
-                    for (let j = i + 1; j < n; j++) {
-                        if (exactFound) return;
-                        const a = items[i];
-                        const b = items[j];
-                        const rest = [];
-                        for (let k = 0; k < n; k++) {
-                            if (k !== i && k !== j) rest.push(items[k]);
-                        }
-
-                        const ops = [];
-                        ops.push({ val: a.val + b.val, text: `${a.val} + ${b.val} = ${a.val + b.val}` });
-                        if (a.val !== 1 && b.val !== 1) {
-                            ops.push({ val: a.val * b.val, text: `${a.val} × ${b.val} = ${a.val * b.val}` });
-                        }
-                        if (a.val > b.val) {
-                            ops.push({ val: a.val - b.val, text: `${a.val} − ${b.val} = ${a.val - b.val}` });
-                        } else if (b.val > a.val) {
-                            ops.push({ val: b.val - a.val, text: `${b.val} − ${a.val} = ${b.val - a.val}` });
-                        }
-                        if (b.val > 1 && a.val % b.val === 0) {
-                            ops.push({ val: a.val / b.val, text: `${a.val} ÷ ${b.val} = ${a.val / b.val}` });
-                        } else if (a.val > 1 && b.val % a.val === 0) {
-                            ops.push({ val: b.val / a.val, text: `${b.val} ÷ ${a.val} = ${b.val / a.val}` });
-                        }
-
-                        for (const op of ops) {
-                            const newSteps = [...steps, op.text];
-                            const diff = Math.abs(target - op.val);
-                            if (diff < bestDiff) {
-                                bestDiff = diff;
-                                bestVal = op.val;
-                                bestSteps = newSteps;
-                            }
-                            if (diff === 0) {
-                                exactFound = true;
-                                return;
-                            }
-                            dfs([...rest, { val: op.val }], newSteps);
-                        }
-                    }
-                }
-            }
-
-            dfs(numbers.map(v => ({ val: v })), []);
-            return { value: bestVal, diff: bestDiff, steps: bestSteps };
-        }
-
-        function getAICifrasMove(numbers, target) {
-            const optimal = solveCifras(numbers, target);
-            if (gameState.difficulty === 'genius') return optimal;
-            if (gameState.difficulty === 'pro') {
-                if (Math.random() < 0.72) return optimal;
-                return findApproximateMove(numbers, target, 1, 6);
-            }
-            if (Math.random() < 0.35) return optimal;
-            return findApproximateMove(numbers, target, 2, 14);
-        }
-
-        function findApproximateMove(numbers, target, minOffset, maxOffset) {
-            const offset = (Math.floor(Math.random() * (maxOffset - minOffset + 1)) + minOffset) * (Math.random() < 0.5 ? 1 : -1);
-            const approxTarget = Math.max(10, Math.min(999, target + offset));
-            const res = solveCifras(numbers, approxTarget);
-            return {
-                value: res.value,
-                diff: Math.abs(target - res.value),
-                steps: res.steps
-            };
-        }
-
-        function finishCifrasRound() {
-            clearInterval(gameState.timerInterval);
-
-            const bestPlayer = getOverallPlayerBestCifras();
-            const playerVal = bestPlayer ? bestPlayer.value : null;
-            const playerDiff = bestPlayer ? bestPlayer.diff : 9999;
-            const aiMove = getAICifrasMove(cifrasState.initialNumbers, cifrasState.target);
-
-            let pPts = 0;
-            let aPts = 0;
-            let headline = '';
-            const subheadline = `Objetivo: ${cifrasState.target} • Intentos registrados: ${cifrasState.savedAttempts.length + (cifrasState.steps.length > 0 ? 1 : 0)}`;
-
-            if (playerDiff === 0 && aiMove.diff === 0) {
-                pPts = 10; aPts = 10;
-                headline = '¡Doble exacto! +10 puntos cada uno';
-            } else if (playerDiff === 0) {
-                pPts = 10;
-                headline = '¡Cifra exacta! +10 puntos para ti';
-            } else if (aiMove.diff === 0) {
-                aPts = 10;
-                headline = 'Gemini logra el exacto (+10 pts)';
-            } else if (playerDiff < aiMove.diff) {
-                pPts = 7;
-                headline = '¡Mejor aproximación! +7 puntos para ti';
-            } else if (aiMove.diff < playerDiff) {
-                aPts = 7;
-                headline = 'Gemini se acerca más (+7 puntos)';
-            } else {
-                pPts = 7; aPts = 7;
-                headline = '¡Empate de distancia! +7 pts cada uno';
-            }
-
-            gameState.playerScore += pPts;
-            gameState.aiScore += aPts;
-            updateHeaderUI();
-
-            gameState.history.push({
-                round: gameState.currentRound,
-                type: 'Cifras',
-                playerPlay: playerVal !== null ? `${playerVal} (a ${playerDiff})` : 'Sin jugada',
-                aiPlay: `${aiMove.value} (a ${aiMove.diff})`,
-                pointsText: `${pPts} - ${aPts}`
-            });
-
-            hideAllScreens();
-            document.getElementById('roundResultScreen').classList.remove('hidden');
-            document.getElementById('overrideWordContainer').classList.add('hidden');
-
-            document.getElementById('resultRoundLabel').textContent = `Ronda ${gameState.currentRound} • Cifras`;
-            document.getElementById('resultHeadline').textContent = headline;
-            document.getElementById('resultSubheadline').textContent = subheadline;
-
-            document.getElementById('playerRoundPointsBadge').textContent = `+${pPts} pts`;
-            document.getElementById('playerResultMain').textContent = playerVal !== null ? `${playerVal} ${playerDiff === 0 ? '🎯' : `(a ${playerDiff})`}` : 'Sin cálculo';
-            document.getElementById('playerResultDetail').innerHTML = (bestPlayer && bestPlayer.steps.length > 0)
-                ? bestPlayer.steps.map(s => `<div class="font-mono-num text-[11px] bg-slate-900 px-2 py-0.5 rounded">• ${s}</div>`).join('')
-                : '<p class="text-slate-400 italic">No realizaste operaciones.</p>';
-
-            document.getElementById('aiRoundPointsBadge').textContent = `+${aPts} pts`;
-            document.getElementById('aiResultMain').textContent = `${aiMove.value} ${aiMove.diff === 0 ? '🎯' : `(a ${aiMove.diff})`}`;
-            document.getElementById('aiResultDetail').innerHTML = aiMove.steps.length > 0
-                ? aiMove.steps.map(s => `<div class="font-mono-num text-[11px] bg-slate-900 px-2 py-0.5 rounded text-amber-200/90">• ${s}</div>`).join('')
-                : '<p class="text-slate-300">Número directo del panel.</p>';
-
-            document.getElementById('aiCommentText').textContent = pPts > aPts
-                ? '"¡Gran cálculo! Me has ganado la ronda."'
-                : pPts === aPts
-                ? '"¡Máxima igualdad numérica!"'
-                : '"¡Buen duelo! Vamos a por la siguiente."';
-
-            updateNextRoundButtonText();
-        }
-
-        /* ============================================================================
-           PRUEBA DE LETRAS: FICHAS CON CAMBIO DE COLOR AL MARCAR + TECLADO TÁCTIL
-           ============================================================================ */
-        const VOWELS_BAG = 'AAAAAAAAAAAAEEEEEEEEEEEEIIIIIIOOOOOOOOOOUUUU'.split('');
-        const CONSONANTS_BAG = 'BBBBCCCDDDDDFFGGHHHJJLLLLLLMMMMNNNNNNNNÑPPPPQRRRRRRRRSSSSSSSSSTTTTTTVXYZ'.split('');
-        const KEYBOARD_ROWS = [
-            ['Q','W','E','R','T','Y','U','I','O','P'],
-            ['A','S','D','F','G','H','J','K','L','Ñ'],
-            ['Z','X','C','V','B','N','M']
-        ];
-
-        function initLetrasRound() {
-            gameState.timeLeft = ROUND_SECONDS;
-            letrasState.letters = [];
-            letrasState.usedIndices = [];
-            letrasState.sentWords = [];
-            letrasState.isDealing = true;
-
-            document.getElementById('letrasScreen').classList.remove('hidden');
-            document.getElementById('letrasDealControls').classList.remove('hidden');
-            document.getElementById('letrasPlayControls').classList.add('hidden');
-            document.getElementById('letrasCountBadge').textContent = '0';
-            document.getElementById('letrasProgressBar').style.width = '100%';
-            updateTimerDisplayForMode('letras');
-
-            renderLetrasRack();
-        }
-
-        function pickLetter(type) {
-            if (!letrasState.isDealing || letrasState.letters.length >= 10) return;
-
-            const currentVowels = letrasState.letters.filter(l => 'AEIOU'.includes(l)).length;
-            const currentConsonants = letrasState.letters.length - currentVowels;
-            const remaining = 10 - letrasState.letters.length;
-
-            let actualType = type;
-            if (type === 'C' && currentVowels + remaining <= 3) {
-                actualType = 'V';
-            } else if (type === 'V' && currentConsonants + remaining <= 4) {
-                actualType = 'C';
-            }
-
-            const bag = actualType === 'V' ? VOWELS_BAG : CONSONANTS_BAG;
-            const letter = bag[Math.floor(Math.random() * bag.length)];
-            letrasState.letters.push(letter);
-
-            document.getElementById('letrasCountBadge').textContent = letrasState.letters.length;
-            renderLetrasRack();
-
-            if (letrasState.letters.length === 10) {
-                beginLetrasPlayPhase();
-            }
-        }
-
-        function autoFillLetters() {
-            while (letrasState.letters.length < 10) {
-                const currentVowels = letrasState.letters.filter(l => 'AEIOU'.includes(l)).length;
-                const nextType = currentVowels < 4 ? 'V' : (Math.random() < 0.4 ? 'V' : 'C');
-                pickLetter(nextType);
-            }
-        }
-
-        function beginLetrasPlayPhase() {
-            letrasState.isDealing = false;
-            document.getElementById('letrasDealControls').classList.add('hidden');
-            document.getElementById('letrasPlayControls').classList.remove('hidden');
-            renderLetrasRack();
-            renderWordBox();
-            renderVirtualKeyboard();
-            renderSentWordsList();
-
-            gameState.timeLeft = ROUND_SECONDS;
-            if (gameState.timerEnabled) {
-                startTimer(ROUND_SECONDS, 'letras', () => {
-                    showToast('⏰', '¡Tiempo agotado en Letras!');
-                    finishLetrasRound();
-                });
-            } else {
-                updateTimerDisplayForMode('letras');
-            }
-        }
-
-        // Renderiza las 10 fichas del tablero: cambia de color a naranja intenso si está marcada
-        function renderLetrasRack() {
-            const rack = document.getElementById('letrasRack');
-            rack.innerHTML = '';
-
-            for (let i = 0; i < 10; i++) {
-                const letter = letrasState.letters[i];
-                if (!letter) {
-                    const slot = document.createElement('div');
-                    slot.className = 'h-10 sm:h-12 rounded-xl border border-dashed border-slate-700 bg-slate-950/50 flex items-center justify-center text-slate-600 font-bold text-sm sm:text-base';
-                    slot.textContent = '?';
-                    rack.appendChild(slot);
-                } else {
-                    const usedOrder = letrasState.usedIndices.indexOf(i);
-                    const isUsed = usedOrder !== -1;
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.disabled = letrasState.isDealing;
-
-                    btn.className = `tile-card h-10 sm:h-12 rounded-xl font-black text-lg sm:text-2xl flex items-center justify-center animate-pop ${isUsed ? 'tile-marked-letter' : ''}`;
-
-                    // Muestra la letra y, si está usada, un pequeño distintivo con su posición en la palabra
-                    if (isUsed) {
-                        btn.innerHTML = `
-                            <span>${letter}</span>
-                            <span class="absolute top-0.5 right-1 text-[9px] font-mono-num font-black bg-slate-950/80 text-amber-300 px-1 rounded leading-tight">${usedOrder + 1}</span>
-                        `;
-                    } else {
-                        btn.textContent = letter;
-                    }
-
-                    // Si ya estaba marcada, pulsarla de nuevo la desmarca; si estaba libre, la marca
-                    btn.onclick = () => toggleLetterIndex(i);
-                    rack.appendChild(btn);
-                }
-            }
-        }
-
-        // Teclado táctil sincronizado con las fichas libres disponibles
-        function renderVirtualKeyboard() {
-            const kb = document.getElementById('virtualKeyboard');
-            if (!kb) return;
-            kb.innerHTML = '';
-
-            // Contar cuántas fichas libres hay de cada letra
-            const freeCounts = {};
-            letrasState.letters.forEach((ch, idx) => {
-                if (!letrasState.usedIndices.includes(idx)) {
-                    freeCounts[ch] = (freeCounts[ch] || 0) + 1;
-                }
-            });
-
-            const allKeys = [...KEYBOARD_ROWS[0], ...KEYBOARD_ROWS[1], ...KEYBOARD_ROWS[2]];
-            allKeys.forEach(ch => {
-                const count = freeCounts[ch] || 0;
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.disabled = count === 0;
-                btn.className = count > 0
-                    ? 'py-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 border border-blue-500/50 text-white font-extrabold text-xs sm:text-sm transition relative shadow'
-                    : 'py-1.5 rounded-lg bg-slate-900/50 border border-slate-800/60 text-slate-600 font-bold text-xs sm:text-sm cursor-not-allowed';
-
-                btn.textContent = ch;
-                btn.onclick = () => {
-                    const freeIdx = letrasState.letters.findIndex((l, idx) => l === ch && !letrasState.usedIndices.includes(idx));
-                    if (freeIdx !== -1) {
-                        toggleLetterIndex(freeIdx);
-                    }
-                };
-                kb.appendChild(btn);
-            });
-        }
-
-        function toggleLetterIndex(idx) {
-            if (letrasState.isDealing) return;
-            const pos = letrasState.usedIndices.indexOf(idx);
-            if (pos !== -1) {
-                // Desmarcar esta ficha y devolverla a su color original
-                letrasState.usedIndices.splice(pos, 1);
-            } else {
-                // Marcar esta ficha y cambiarla de color
-                letrasState.usedIndices.push(idx);
-            }
-            renderLetrasRack();
-            renderWordBox();
-            renderVirtualKeyboard();
-        }
-
-        function backspaceLetter() {
-            if (letrasState.isDealing || letrasState.usedIndices.length === 0) return;
-            letrasState.usedIndices.pop();
-            renderLetrasRack();
-            renderWordBox();
-            renderVirtualKeyboard();
-        }
-
-        function clearWord() {
-            if (letrasState.isDealing) return;
-            letrasState.usedIndices = [];
-            renderLetrasRack();
-            renderWordBox();
-            renderVirtualKeyboard();
-        }
-
-        function getCurrentPlayerWord() {
-            return letrasState.usedIndices.map(idx => letrasState.letters[idx]).join('');
-        }
-
-        function renderWordBox() {
-            const box = document.getElementById('wordDisplayBox');
-            const word = getCurrentPlayerWord();
-            document.getElementById('currentWordLen').textContent = word.length;
-
-            if (word.length === 0) {
-                box.innerHTML = '<span class="text-slate-500 italic text-xs">Pulsa las letras del panel o usa el teclado...</span>';
-                return;
-            }
-
-            box.innerHTML = letrasState.usedIndices.map(idx => `
-                <button type="button" onclick="toggleLetterIndex(${idx})" title="Toca para quitar esta letra" class="inline-flex items-center justify-center w-7 h-8 sm:w-9 sm:h-10 rounded-lg bg-gradient-to-b from-orange-400 to-orange-600 text-white border border-amber-200 font-black text-base sm:text-xl shadow hover:scale-105 transition">
-                    ${letrasState.letters[idx]}
-                </button>
-            `).join('');
-        }
-
-        function submitPlayerWord() {
-            const word = getCurrentPlayerWord();
-            if (word.length < 2) {
-                showToast('⚠️', 'Forma una palabra de al menos 2 letras.');
-                return;
-            }
-
-            const isValid = DICTIONARY_SET.has(word);
-            const alreadySent = letrasState.sentWords.some(item => item.word === word);
-
-            if (!alreadySent) {
-                letrasState.sentWords.push({
-                    word,
-                    length: word.length,
-                    isValid
-                });
-                letrasState.sentWords.sort((a, b) => {
-                    if (a.isValid !== b.isValid) return a.isValid ? -1 : 1;
-                    return b.length - a.length;
-                });
-
-                if (isValid) {
-                    showToast('✅', `"${word}" (${word.length} letras) guardada. ¡Busca otra más larga!`);
-                } else {
-                    showToast('📝', `"${word}" (${word.length}) apuntada. ¡Sigue buscando!`);
-                }
-            } else {
-                showToast('ℹ️', `Ya habías enviado "${word}".`);
-            }
-
-            // Restaurar el color de todas las fichas para seguir formando nuevas palabras
-            letrasState.usedIndices = [];
-            renderLetrasRack();
-            renderWordBox();
-            renderVirtualKeyboard();
-            renderSentWordsList();
-        }
-
-        function renderSentWordsList() {
-            const countEl = document.getElementById('letrasWordsCount');
-            const bestBadgeEl = document.getElementById('letrasBestWordBadge');
-            const listEl = document.getElementById('letrasSentWordsList');
-
-            countEl.textContent = letrasState.sentWords.length;
-
-            const bestValid = letrasState.sentWords.find(w => w.isValid);
-            if (bestValid) {
-                bestBadgeEl.textContent = `${bestValid.word} (${bestValid.length})`;
-            } else if (letrasState.sentWords.length > 0) {
-                bestBadgeEl.textContent = `${letrasState.sentWords[0].word} (${letrasState.sentWords[0].length}?)`;
-            } else {
-                bestBadgeEl.textContent = 'Ninguna';
-            }
-
-            if (letrasState.sentWords.length === 0) {
-                listEl.innerHTML = '<span class="text-[11px] text-slate-500 italic">Envía una palabra y sigue buscando otra más larga...</span>';
-                return;
-            }
-
-            listEl.innerHTML = letrasState.sentWords.map((item, idx) => {
-                const isTopValid = item.isValid && idx === 0;
-                const style = isTopValid
-                    ? 'bg-emerald-500/25 text-emerald-200 border-emerald-400/70 font-extrabold'
-                    : item.isValid
-                    ? 'bg-slate-800 text-slate-200 border-slate-600 font-semibold'
-                    : 'bg-amber-950/60 text-amber-200 border-amber-600/50';
-                return `<span class="shrink-0 px-2 py-0.5 rounded-md border text-[11px] ${style}">${item.word} (${item.length}${item.isValid ? '✓' : '?'})</span>`;
-            }).join('');
-        }
-
-        // Soporte de teclado físico sincronizado
-        document.addEventListener('keydown', (e) => {
-            if (document.getElementById('letrasScreen').classList.contains('hidden')) return;
-            if (letrasState.isDealing) return;
-
-            if (e.key === 'Backspace') {
-                e.preventDefault();
-                backspaceLetter();
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (e.ctrlKey || e.metaKey) {
-                    finishLetrasRound();
-                } else {
-                    submitPlayerWord();
-                }
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                clearWord();
-            } else if (e.key.length === 1) {
-                const char = e.key.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-                if (/^[A-ZÑ]$/.test(char)) {
-                    const freeIdx = letrasState.letters.findIndex((l, idx) => l === char && !letrasState.usedIndices.includes(idx));
-                    if (freeIdx !== -1) {
-                        toggleLetterIndex(freeIdx);
-                    }
-                }
-            }
+        btn.addEventListener("click", () => {
+          if (state.roundEnded || tile.usedOrder) return;
+          state.exprTokens.push({
+            type: "num",
+            tileId: tile.id,
+            value: tile.value,
+            label: String(tile.value)
+          });
+          renderNumbers();
         });
 
-        function canFormWord(word, availableLetters) {
-            const counts = {};
-            for (const l of availableLetters) counts[l] = (counts[l] || 0) + 1;
-            for (const ch of word) {
-                if (!counts[ch]) return false;
-                counts[ch]--;
+        grid.appendChild(btn);
+      });
+
+      const exprText = state.exprTokens.length
+        ? state.exprTokens.map((t) => t.label).join(" ")
+        : "Toca fichas y operaciones";
+      $("exprDisplay").textContent = exprText;
+
+      const list = $("savedCalcsList");
+      list.innerHTML = "";
+      if (state.savedCalcs.length === 0) {
+        list.innerHTML = '<span class="muted">Ningún cálculo guardado aún</span>';
+      } else {
+        state.savedCalcs.forEach((c) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = `${c.label} = ${c.result} (dif: ${c.diff})`;
+          list.appendChild(chip);
+        });
+      }
+    }
+
+    function startNumbersRound() {
+      state.roundEnded = false;
+      const round = generateNumbersRound();
+      state.targetNumber = round.target;
+      state.numberTiles = round.tiles;
+      state.exprTokens = [];
+      state.savedCalcs = [];
+      $("numbersResult").classList.add("hidden");
+      $("numbersResult").innerHTML = "";
+      showView("numbers");
+      renderNumbers();
+      startTimer();
+    }
+
+    function saveCalculation() {
+      if (state.roundEnded || !state.exprTokens.length) return;
+      const result = evaluateExpr(state.exprTokens);
+      if (result === null) return;
+      const diff = Math.abs(state.targetNumber - result);
+      const label = state.exprTokens.map((t) => t.label).join(" ");
+      state.savedCalcs.push({ label, result, diff });
+      state.exprTokens = [];
+      renderNumbers();
+    }
+
+    function computeAiNumbersSolution(tiles, target) {
+      const vals = tiles.map((t) => t.value);
+      let best = { diff: Math.abs(target - vals[0]), expr: String(vals[0]), val: vals[0] };
+
+      for (let i = 0; i < vals.length; i++) {
+        const d0 = Math.abs(target - vals[i]);
+        if (d0 < best.diff) best = { diff: d0, expr: String(vals[i]), val: vals[i] };
+
+        for (let j = 0; j < vals.length; j++) {
+          if (i === j) continue;
+          const ops = [
+            { sym: "+", v: vals[i] + vals[j] },
+            { sym: "-", v: vals[i] - vals[j] },
+            { sym: "*", v: vals[i] * vals[j] },
+            { sym: "/", v: vals[j] !== 0 && vals[i] % vals[j] === 0 ? vals[i] / vals[j] : null }
+          ];
+          for (const o of ops) {
+            if (o.v === null || !Number.isInteger(o.v)) continue;
+            const d = Math.abs(target - o.v);
+            if (d < best.diff) {
+              best = { diff: d, expr: `${vals[i]} ${o.sym} ${vals[j]}`, val: o.v };
             }
-            return true;
+          }
         }
+      }
+      return best;
+    }
 
-        function findBestWords(availableLetters) {
-            const matches = DICTIONARY.filter(w => canFormWord(w, availableLetters));
-            matches.sort((a, b) => b.length - a.length);
-            return matches;
+    function resolveNumbersRound(byTimeout = false) {
+      if (state.roundEnded) return;
+      state.roundEnded = true;
+      stopTimer();
+
+      if (state.exprTokens.length) {
+        const liveVal = evaluateExpr(state.exprTokens);
+        if (liveVal !== null) {
+          state.savedCalcs.push({
+            label: state.exprTokens.map((t) => t.label).join(" "),
+            result: liveVal,
+            diff: Math.abs(state.targetNumber - liveVal)
+          });
+          state.exprTokens = [];
         }
+      }
+      renderNumbers();
 
-        function getAILetrasMove(availableLetters) {
-            const matches = findBestWords(availableLetters);
-            if (matches.length === 0) return '';
+      const bestPlayer = state.savedCalcs.reduce(
+        (best, c) => (!best || c.diff < best.diff ? c : best),
+        null
+      );
+      const aiSol = computeAiNumbersSolution(state.numberTiles, state.targetNumber);
 
-            if (gameState.difficulty === 'genius') return matches[0];
-            if (gameState.difficulty === 'pro') {
-                const topPool = matches.slice(0, Math.min(3, matches.length));
-                return topPool[Math.floor(Math.random() * topPool.length)];
-            }
-            const medium = matches.filter(w => w.length <= 7);
-            const pool = medium.length > 0 ? medium : matches;
-            return pool[Math.floor(Math.random() * Math.min(5, pool.length))];
-        }
+      const playerDiff = bestPlayer ? bestPlayer.diff : Infinity;
+      if (playerDiff < aiSol.diff) {
+        state.scoreYou += playerDiff === 0 ? 10 : 7;
+      } else if (aiSol.diff < playerDiff) {
+        state.scoreAi += aiSol.diff === 0 ? 10 : 7;
+      } else if (bestPlayer) {
+        state.scoreYou += 5;
+        state.scoreAi += 5;
+      }
+      updateScoresUI();
 
-        let lastLetrasContext = null;
+      const box = $("numbersResult");
+      box.classList.remove("hidden");
+      box.innerHTML = `
+        <div><strong>${byTimeout ? "Tiempo agotado." : "Ronda resuelta."}</strong></div>
+        <div>Tu mejor cálculo: <strong>${bestPlayer ? `${bestPlayer.label} = ${bestPlayer.result} (dif: ${bestPlayer.diff})` : "Ninguno"}</strong></div>
+        <div>Aproximación IA: <strong>${aiSol.expr} = ${aiSol.val} (dif: ${aiSol.diff})</strong></div>
+        <div style="margin-top:8px;">
+          <button id="nextNumbersBtn" class="btn-success" type="button">Nueva ronda de Cifras</button>
+        </div>
+      `;
+      $("nextNumbersBtn").addEventListener("click", startNumbersRound);
+    }
 
-        function finishLetrasRound() {
-            clearInterval(gameState.timerInterval);
+    // ================= EVENTOS =================
+    $("toggleTimeModeBtn").addEventListener("click", toggleInfiniteMode);
+    $("menuSwitchTimeBtn").addEventListener("click", toggleInfiniteMode);
+    $("timerBadge").addEventListener("dblclick", toggleInfiniteMode);
 
-            const pendingWord = getCurrentPlayerWord();
-            const candidates = [...letrasState.sentWords];
-            if (pendingWord.length >= 2 && !candidates.some(c => c.word === pendingWord)) {
-                candidates.push({
-                    word: pendingWord,
-                    length: pendingWord.length,
-                    isValid: DICTIONARY_SET.has(pendingWord)
-                });
-            }
+    $("resetScoreBtn").addEventListener("click", () => {
+      state.scoreYou = 0;
+      state.scoreAi = 0;
+      updateScoresUI();
+    });
 
-            const validCandidates = candidates.filter(c => c.isValid).sort((a, b) => b.length - a.length);
-            const unverifiedCandidates = candidates.filter(c => !c.isValid).sort((a, b) => b.length - a.length);
+    $("startLettersBtn").addEventListener("click", startLettersRound);
+    $("startNumbersBtn").addEventListener("click", startNumbersRound);
+    $("lettersBackBtn").addEventListener("click", () => showView("menu"));
+    $("numbersBackBtn").addEventListener("click", () => showView("menu"));
 
-            let chosenWord = '';
-            let isInDict = false;
+    $("lettersHintBtn").addEventListener("click", () => {
+      if (state.roundEnded || state.letterTiles.length < 9) return;
+      const replaceIdx = Math.floor(Math.random() * state.letterTiles.length);
+      const wantVowel = state.letterTiles.filter((t) => VOWELS.includes(t.char)).length < 3;
+      state.letterTiles[replaceIdx] = {
+        id: state.letterTiles[replaceIdx].id,
+        char: randomItem(wantVowel ? VOWELS : CONSONANTS),
+        usedOrder: null
+      };
+      state.selectedTileIds = [];
+      renderLetters();
+    });
 
-            if (validCandidates.length > 0) {
-                chosenWord = validCandidates[0].word;
-                isInDict = true;
-            } else if (unverifiedCandidates.length > 0) {
-                chosenWord = unverifiedCandidates[0].word;
-                isInDict = false;
-            }
+    $("undoLetterBtn").addEventListener("click", () => {
+      if (state.roundEnded) return;
+      state.selectedTileIds.pop();
+      renderLetters();
+    });
 
-            const aiWord = getAILetrasMove(letrasState.letters);
-            const allMatches = findBestWords(letrasState.letters);
+    $("clearWordBtn").addEventListener("click", () => {
+      if (state.roundEnded) return;
+      state.selectedTileIds = [];
+      renderLetters();
+    });
 
-            lastLetrasContext = {
-                playerWord: chosenWord,
-                allPlayerWords: candidates,
-                aiWord,
-                allMatches,
-                isInDict,
-                prevPlayerScore: gameState.playerScore,
-                prevAiScore: gameState.aiScore
-            };
+    $("submitWordBtn").addEventListener("click", submitWord);
+    $("finishLettersRoundBtn").addEventListener("click", () => resolveLettersRound(false));
 
-            evaluateAndRenderLetrasResult(isInDict);
-        }
+    document.querySelectorAll(".op-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (state.roundEnded) return;
+        const op = btn.dataset.op;
+        const symbolMap = { "+": "+", "-": "−", "*": "×", "/": "÷", "(": "(", ")": ")" };
+        state.exprTokens.push({
+          type: "op",
+          value: op,
+          label: symbolMap[op] || op
+        });
+        renderNumbers();
+      });
+    });
 
-        function validatePlayerWordOverride() {
-            if (!lastLetrasContext) return;
-            gameState.playerScore = lastLetrasContext.prevPlayerScore;
-            gameState.aiScore = lastLetrasContext.prevAiScore;
-            gameState.history.pop();
-            evaluateAndRenderLetrasResult(true);
-            showToast('✅', `Palabra "${lastLetrasContext.playerWord}" aceptada.`);
-        }
+    $("backspaceExprBtn").addEventListener("click", () => {
+      if (state.roundEnded) return;
+      state.exprTokens.pop();
+      renderNumbers();
+    });
 
-        function evaluateAndRenderLetrasResult(playerWordValid) {
-            const { playerWord, allPlayerWords, aiWord, allMatches } = lastLetrasContext;
+    $("clearExprBtn").addEventListener("click", () => {
+      if (state.roundEnded) return;
+      state.exprTokens = [];
+      renderNumbers();
+    });
 
-            const pLen = playerWordValid ? playerWord.length : 0;
-            const aLen = aiWord.length;
+    $("saveCalcBtn").addEventListener("click", saveCalculation);
+    $("finishNumbersRoundBtn").addEventListener("click", () => resolveNumbersRound(false));
 
-            let pPts = 0;
-            let aPts = 0;
-            let headline = '';
-
-            const calcScore = (len) => (len === 10 ? 20 : len);
-
-            if (pLen === 0 && aLen === 0) {
-                headline = 'Sin palabras válidas en esta ronda';
-            } else if (pLen > aLen) {
-                pPts = calcScore(pLen);
-                headline = `¡Palabra ganadora! +${pPts} puntos para ti`;
-            } else if (aLen > pLen) {
-                aPts = calcScore(aLen);
-                headline = `Gemini gana con ${aLen} letras (+${aPts} pts)`;
-            } else {
-                pPts = calcScore(pLen);
-                aPts = calcScore(aLen);
-                headline = `¡Empate a ${pLen} letras! +${pPts} pts cada uno`;
-            }
-
-            gameState.playerScore += pPts;
-            gameState.aiScore += aPts;
-            updateHeaderUI();
-
-            gameState.history.push({
-                round: gameState.currentRound,
-                type: 'Letras',
-                playerPlay: playerWord ? `${playerWord} (${playerWordValid ? pLen + 'L' : 'no vál.'})` : 'Sin palabra',
-                aiPlay: aiWord ? `${aiWord} (${aLen}L)` : 'Sin palabra',
-                pointsText: `${pPts} - ${aPts}`
-            });
-
-            hideAllScreens();
-            document.getElementById('roundResultScreen').classList.remove('hidden');
-
-            document.getElementById('resultRoundLabel').textContent = `Ronda ${gameState.currentRound} • Letras`;
-            document.getElementById('resultHeadline').textContent = headline;
-            document.getElementById('resultSubheadline').textContent = `Panel: ${letrasState.letters.join(' ')}`;
-
-            document.getElementById('playerRoundPointsBadge').textContent = `+${pPts} pts`;
-            document.getElementById('playerResultMain').textContent = playerWord || 'Sin palabra';
-
-            const otherPlayerWords = allPlayerWords.map(w => `${w.word} (${w.length})`).join(', ');
-            if (!playerWord) {
-                document.getElementById('playerResultDetail').innerHTML = '<p class="text-slate-400 italic">No enviaste palabras.</p>';
-                document.getElementById('overrideWordContainer').classList.add('hidden');
-            } else if (playerWordValid) {
-                document.getElementById('playerResultDetail').innerHTML = `
-                    <p class="text-emerald-300 font-semibold">✓ Mejor palabra válida (${pLen} letras).</p>
-                    ${allPlayerWords.length > 1 ? `<p class="text-[11px] text-slate-400">Tus envíos: ${otherPlayerWords}</p>` : ''}
-                `;
-                document.getElementById('overrideWordContainer').classList.add('hidden');
-            } else {
-                document.getElementById('playerResultDetail').innerHTML = `<p class="text-amber-300 font-semibold">⚠️ "${playerWord}" no está en mi diccionario base.</p>`;
-                document.getElementById('overrideWordContainer').classList.remove('hidden');
-            }
-
-            document.getElementById('aiRoundPointsBadge').textContent = `+${aPts} pts`;
-            document.getElementById('aiResultMain').textContent = aiWord || 'Sin palabra';
-
-            const otherSuggestions = allMatches.filter(w => w !== aiWord && w !== playerWord).slice(0, 4);
-            document.getElementById('aiResultDetail').innerHTML = `
-                <p class="text-slate-300">Palabra de <strong>${aLen} letras</strong>.</p>
-                ${otherSuggestions.length > 0 ? `<p class="text-[11px] text-slate-400 mt-1">Otras posibles: <span class="text-blue-300 font-semibold">${otherSuggestions.join(', ')}</span></p>` : ''}
-            `;
-
-            document.getElementById('aiCommentText').textContent = pPts > aPts
-                ? '"¡Gran vocabulario! Me has superado."'
-                : pPts === aPts && pPts > 0
-                ? '"¡Empate de ingenio!"'
-                : '"¡Buen intento! Vamos a por la siguiente."';
-
-            updateNextRoundButtonText();
-        }
-
-        /* ============================================================================
-           TEMPORIZADOR (45s / INFINITO) Y FLUJO ENTRE RONDAS
-           ============================================================================ */
-        function startTimer(seconds, prefix, onComplete) {
-            clearInterval(gameState.timerInterval);
-            gameState.timeLeft = seconds;
-            gameState.activeTimerPrefix = prefix;
-            gameState.activeTimerCallback = onComplete;
-
-            const textEl = document.getElementById(`${prefix}TimerText`);
-            const iconEl = document.getElementById(`${prefix}TimerIcon`);
-            const barEl = document.getElementById(`${prefix}ProgressBar`);
-
-            if (!gameState.timerEnabled) {
-                updateTimerDisplayForMode(prefix);
-                return;
-            }
-
-            iconEl.textContent = '⏱️';
-            textEl.textContent = `${seconds}s`;
-            barEl.style.width = `${(seconds / ROUND_SECONDS) * 100}%`;
-            barEl.classList.remove('bg-blue-400', 'bg-rose-500');
-            barEl.classList.add(prefix === 'cifras' ? 'bg-amber-400' : 'bg-emerald-400');
-
-            gameState.timerInterval = setInterval(() => {
-                if (!gameState.timerEnabled) return;
-
-                gameState.timeLeft--;
-                textEl.textContent = `${Math.max(0, gameState.timeLeft)}s`;
-                const pct = Math.max(0, (gameState.timeLeft / ROUND_SECONDS) * 100);
-                barEl.style.width = `${pct}%`;
-
-                if (gameState.timeLeft <= 10) {
-                    barEl.classList.remove('bg-amber-400', 'bg-emerald-400');
-                    barEl.classList.add('bg-rose-500');
-                }
-
-                if (gameState.timeLeft <= 0) {
-                    clearInterval(gameState.timerInterval);
-                    onComplete();
-                }
-            }, 1000);
-        }
-
-        function updateNextRoundButtonText() {
-            const btn = document.getElementById('nextRoundBtn');
-            if (gameState.currentRound >= gameState.totalRounds) {
-                btn.textContent = '🏆 Ver Marcador Final';
-            } else {
-                btn.textContent = `Siguiente Ronda (${gameState.currentRound + 1}/${gameState.totalRounds}) →`;
-            }
-        }
-
-        function nextRound() {
-            if (gameState.currentRound >= gameState.totalRounds) {
-                showFinalSummary();
-            } else {
-                gameState.currentRound++;
-                startCurrentRound();
-            }
-        }
-
-        function showFinalSummary() {
-            hideAllScreens();
-            document.getElementById('finalSummaryScreen').classList.remove('hidden');
-
-            const p = gameState.playerScore;
-            const a = gameState.aiScore;
-
-            document.getElementById('finalPlayerScore').textContent = p;
-            document.getElementById('finalAiScore').textContent = a;
-
-            if (p > a) {
-                document.getElementById('finalTrophy').textContent = '🏆';
-                document.getElementById('finalWinnerTitle').textContent = '¡Has ganado el duelo!';
-                document.getElementById('finalWinnerSubtitle').textContent = 'Magistral actuación frente a Gemini.';
-            } else if (a > p) {
-                document.getElementById('finalTrophy').textContent = '🤖';
-                document.getElementById('finalWinnerTitle').textContent = 'Gemini gana esta partida';
-                document.getElementById('finalWinnerSubtitle').textContent = '¡Muy reñido! ¿Jugamos la revancha?';
-            } else {
-                document.getElementById('finalTrophy').textContent = '🤝';
-                document.getElementById('finalWinnerTitle').textContent = '¡Empate técnico!';
-                document.getElementById('finalWinnerSubtitle').textContent = 'Habéis terminado exactamente con los mismos puntos.';
-            }
-
-            const tbody = document.getElementById('summaryTableBody');
-            tbody.innerHTML = gameState.history.map(item => `
-                <tr>
-                    <td class="py-1.5 px-1.5 font-mono-num font-bold text-slate-400">#${item.round}</td>
-                    <td class="py-1.5 px-1.5 font-semibold ${item.type === 'Cifras' ? 'text-blue-300' : 'text-emerald-300'}">${item.type}</td>
-                    <td class="py-1.5 px-1.5 text-white font-medium">${item.playerPlay}</td>
-                    <td class="py-1.5 px-1.5 text-amber-300 font-medium">${item.aiPlay}</td>
-                    <td class="py-1.5 px-1.5 text-right font-mono-num font-bold text-slate-200">${item.pointsText}</td>
-                </tr>
-            `).join('');
-        }
-
-        function shuffleArray(arr) {
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
-    </script>
+    updateTimeUI();
+    updateScoresUI();
+  </script>
 </body>
 </html>
