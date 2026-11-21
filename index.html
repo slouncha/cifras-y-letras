@@ -3,21 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Cifras y Letras - Duelo IA</title>
+  <title>Cifras y Letras</title>
   <style>
     :root {
       --bg: #0f172a;
-      --panel: #1e293b;
-      --panel-2: #273549;
+      --card: #1e293b;
+      --card-2: #273549;
       --text: #f8fafc;
       --muted: #94a3b8;
       --accent: #38bdf8;
-      --selected-bg: #f59e0b;
-      --selected-border: #fde68a;
-      --selected-text: #111827;
-      --ok: #22c55e;
+      --accent-2: #22c55e;
+      --warn: #f59e0b;
       --danger: #ef4444;
       --border: #334155;
+      --tile-bg: #e2e8f0;
+      --tile-text: #0f172a;
+      --tile-active-bg: #f59e0b;
+      --tile-active-border: #fef08a;
+      --tile-active-text: #111827;
     }
 
     * {
@@ -25,11 +28,17 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html, body {
+    html {
+      min-height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body {
       margin: 0;
       padding: 0;
       min-height: 100dvh;
-      background: radial-gradient(circle at top, #1e293b 0%, var(--bg) 65%);
+      background: radial-gradient(circle at top, #1e293b 0%, var(--bg) 70%);
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow-x: hidden;
@@ -37,18 +46,18 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    .app {
-      max-width: 780px;
+    .container {
+      width: 100%;
+      max-width: 820px;
       margin: 0 auto;
-      min-height: 100dvh;
-      padding: 10px 12px 28px;
+      padding: 10px 12px 48px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    header.topbar {
-      background: rgba(30, 41, 59, 0.92);
+    .topbar {
+      background: rgba(30, 41, 59, 0.95);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 8px 12px;
@@ -59,70 +68,42 @@
       gap: 8px;
     }
 
-    .brand {
+    .title {
       font-weight: 800;
       font-size: 1rem;
-      letter-spacing: 0.3px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
-    .scores {
+    .meta-group {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.88rem;
-      font-weight: 700;
-    }
-
-    .score-pill {
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 4px 10px;
-    }
-
-    .score-pill.you span { color: var(--accent); }
-    .score-pill.ai span { color: #c084fc; }
-
-    .timer-box {
-      display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 6px;
     }
 
-    .timer-badge {
-      background: #0b1220;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-weight: 800;
-      font-size: 0.92rem;
-      padding: 5px 11px;
+    .pill {
+      background: var(--card-2);
+      border: 1px solid var(--border);
       border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .pill.timer {
+      border-color: var(--accent);
+      color: var(--accent);
       cursor: pointer;
       user-select: none;
     }
 
-    .timer-badge.danger {
+    .pill.timer.low {
       border-color: var(--danger);
       color: #fca5a5;
       background: rgba(239, 68, 68, 0.16);
     }
 
-    .mode-toggle {
-      background: var(--panel-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
     .card {
-      background: rgba(30, 41, 59, 0.9);
+      background: rgba(30, 41, 59, 0.94);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 12px;
@@ -131,19 +112,40 @@
       gap: 10px;
     }
 
-    .menu-grid {
+    h2, h3 {
+      margin: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .option-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
     button {
       font-family: inherit;
-      cursor: pointer;
-      border: none;
-      border-radius: 11px;
       font-weight: 700;
-      transition: transform 0.08s ease, opacity 0.15s ease, background 0.15s ease;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
     }
 
     button:active:not(:disabled) {
@@ -151,7 +153,7 @@
     }
 
     button:disabled {
-      opacity: 0.42;
+      opacity: 0.45;
       cursor: not-allowed;
     }
 
@@ -159,59 +161,51 @@
       background: var(--accent);
       color: #062033;
       padding: 10px 14px;
-      font-size: 0.95rem;
-    }
-
-    .btn-secondary {
-      background: var(--panel-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 9px 12px;
-      font-size: 0.88rem;
+      font-size: 0.92rem;
     }
 
     .btn-success {
-      background: var(--ok);
+      background: var(--accent-2);
       color: #052e16;
       padding: 10px 14px;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
     }
 
     .btn-warn {
-      background: var(--selected-bg);
-      color: var(--selected-text);
-      padding: 8px 12px;
+      background: var(--warn);
+      color: #111827;
+      padding: 9px 12px;
       font-size: 0.86rem;
     }
 
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+    .btn-ghost {
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 11px;
+      font-size: 0.84rem;
     }
 
-    .muted {
-      color: var(--muted);
-      font-size: 0.85rem;
+    .btn-ghost.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.2);
+      color: #e0f2fe;
     }
 
-    /* Fichas de Letras */
-    .tiles-row {
+    .tiles-letters {
       display: grid;
       grid-template-columns: repeat(9, minmax(0, 1fr));
-      gap: 6px;
+      gap: 5px;
     }
 
-    .letter-tile {
+    .tile {
       position: relative;
-      background: #e2e8f0;
-      color: #0f172a;
+      background: var(--tile-bg);
+      color: var(--tile-text);
       border: 2px solid #94a3b8;
       border-radius: 10px;
-      min-height: 46px;
-      font-size: 1.25rem;
+      min-height: 44px;
+      font-size: 1.15rem;
       font-weight: 900;
       display: flex;
       align-items: center;
@@ -219,299 +213,326 @@
       user-select: none;
     }
 
-    .letter-tile.used {
-      background: var(--selected-bg);
-      color: var(--selected-text);
-      border-color: var(--selected-border);
+    .tile.selected {
+      background: var(--tile-active-bg);
+      color: var(--tile-active-text);
+      border-color: var(--tile-active-border);
       box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
       transform: translateY(-2px);
     }
 
-    .order-tag {
+    .tile-badge {
       position: absolute;
       top: 2px;
-      right: 4px;
-      font-size: 0.65rem;
+      right: 3px;
+      font-size: 0.62rem;
       font-weight: 900;
       line-height: 1;
       padding: 1px 4px;
       border-radius: 999px;
-      background: #111827;
-      color: #fde68a;
+      background: #0f172a;
+      color: #fde047;
     }
 
-    .word-preview {
+    .word-box {
       background: #0b1220;
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 10px 12px;
-      min-height: 44px;
+      padding: 9px 12px;
+      min-height: 42px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 800;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
     }
 
     .keyboard {
       display: grid;
-      grid-template-columns: repeat(10, minmax(0, 1fr));
-      gap: 5px;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 4px;
     }
 
-    .key-btn {
-      background: var(--panel-2);
+    .key {
+      background: var(--card-2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 8px 2px;
-      font-size: 0.9rem;
+      padding: 7px 2px;
+      font-size: 0.85rem;
     }
 
-    .key-btn.available {
+    .key.can-pick {
       border-color: var(--accent);
       background: rgba(56, 189, 248, 0.14);
     }
 
-    .key-btn.marked {
-      background: var(--selected-bg);
-      color: var(--selected-text);
-      border-color: var(--selected-border);
+    .key.all-used {
+      background: var(--tile-active-bg);
+      color: var(--tile-active-text);
+      border-color: var(--tile-active-border);
     }
 
-    /* Fichas de Cifras */
-    .target-box {
+    .target-card {
       background: #0b1220;
       border: 2px solid var(--accent);
-      border-radius: 14px;
-      padding: 10px 14px;
+      border-radius: 12px;
+      padding: 8px 12px;
       text-align: center;
     }
 
-    .target-num {
-      font-size: 2rem;
+    .target-value {
+      font-size: 1.85rem;
       font-weight: 900;
       color: var(--accent);
       line-height: 1.1;
     }
 
-    .num-tiles {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 7px;
-    }
-
-    .num-tile {
-      position: relative;
-      background: #e2e8f0;
-      color: #0f172a;
-      border: 2px solid #94a3b8;
-      border-radius: 11px;
-      min-height: 48px;
-      font-size: 1.2rem;
-      font-weight: 900;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .num-tile.used {
-      background: var(--selected-bg);
-      color: var(--selected-text);
-      border-color: var(--selected-border);
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
-      transform: translateY(-2px);
-    }
-
-    .ops-row {
+    .tiles-numbers {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 6px;
     }
 
+    .ops-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 5px;
+    }
+
     .op-btn {
-      background: var(--panel-2);
+      background: var(--card-2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 9px 4px;
-      font-size: 1rem;
+      padding: 8px 4px;
+      font-size: 0.98rem;
     }
 
     .expr-box {
       background: #0b1220;
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 10px 12px;
-      min-height: 44px;
+      padding: 9px 12px;
+      min-height: 42px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      font-size: 1.1rem;
+      font-size: 1.02rem;
       font-weight: 700;
       word-break: break-word;
     }
 
-    .chips-list {
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-bottom: 6px;
+    }
+
+    .action-bar > button {
+      flex: 1 1 140px;
+    }
+
+    .chips {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
 
     .chip {
-      background: var(--panel-2);
+      background: var(--card-2);
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 4px 10px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
     }
 
-    .result-box {
+    .result-panel {
       background: #0b1220;
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 10px 12px;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       line-height: 1.45;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .hidden {
       display: none !important;
     }
 
-    @media (max-width: 560px) {
-      .app {
-        padding: 8px 8px 34px;
+    @media (max-width: 600px) {
+      .container {
+        padding: 8px 8px 64px;
         gap: 8px;
       }
+
       .card {
         padding: 10px;
         gap: 8px;
+        border-radius: 14px;
       }
-      .tiles-row {
-        gap: 4px;
-      }
-      .letter-tile {
-        min-height: 40px;
-        font-size: 1.05rem;
+
+      .tile {
+        min-height: 38px;
+        font-size: 1rem;
         border-radius: 8px;
       }
+
+      .tiles-letters {
+        gap: 4px;
+      }
+
       .keyboard {
         grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 4px;
       }
-      .key-btn {
-        padding: 7px 2px;
-        font-size: 0.84rem;
+
+      .key {
+        padding: 6px 2px;
+        font-size: 0.8rem;
       }
-      .num-tiles {
+
+      .target-value {
+        font-size: 1.55rem;
+      }
+
+      .tiles-numbers {
         gap: 5px;
       }
-      .num-tile {
-        min-height: 42px;
-        font-size: 1.05rem;
+
+      .op-btn {
+        padding: 7px 2px;
+        font-size: 0.92rem;
       }
-      .target-num {
-        font-size: 1.65rem;
-      }
-      button.btn-primary,
-      button.btn-success,
-      button.btn-secondary {
-        padding: 9px 10px;
-        font-size: 0.9rem;
+
+      .btn-primary,
+      .btn-success,
+      .btn-warn,
+      .btn-ghost {
+        padding: 8px 10px;
+        font-size: 0.86rem;
       }
     }
   </style>
 </head>
 <body>
-  <div class="app">
+  <main class="container">
     <header class="topbar">
-      <div class="brand">🎯 Cifras y Letras</div>
-      <div class="scores">
-        <div class="score-pill you">Tú: <span id="scoreYou">0</span></div>
-        <div class="score-pill ai">IA: <span id="scoreAi">0</span></div>
-      </div>
-      <div class="timer-box">
-        <div id="timerBadge" class="timer-badge" title="Doble toque para cambiar entre 45s y Sin tiempo">⏱️ 45s</div>
-        <button id="toggleTimeModeBtn" class="mode-toggle" type="button">Modo: 45s</button>
+      <div class="title">🎯 Cifras y Letras</div>
+      <div class="meta-group">
+        <span class="pill">Tú: <strong id="ptsYou">0</strong></span>
+        <span class="pill">IA: <strong id="ptsAi">0</strong></span>
+        <span id="timerPill" class="pill timer" title="Doble toque: 45s / Sin tiempo">⏱️ 45s</span>
+        <button id="timeModeBtn" class="btn-ghost" type="button">45s</button>
       </div>
     </header>
 
-    <!-- MENÚ PRINCIPAL -->
-    <section id="menuView" class="card">
-      <div class="row">
+    <!-- CONFIGURACIÓN Y MENÚ -->
+    <section id="menuSection" class="card">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;">
         <div>
-          <h2 style="margin:0 0 4px;font-size:1.15rem;">Elige prueba para jugar contra la IA</h2>
-          <div class="muted">45 segundos en ambas pruebas o modo sin tiempo (∞). Al marcar fichas cambian de color y muestran su orden.</div>
+          <h2>Configuración de partida</h2>
+          <div class="muted">Elige dificultad, forma de sacar letras o cifras y modo de tiempo.</div>
         </div>
-        <button id="resetScoreBtn" class="btn-secondary" type="button">Reiniciar marcador</button>
+        <button id="resetScoreBtn" class="btn-ghost" type="button">Reiniciar puntos</button>
       </div>
 
-      <div class="menu-grid">
-        <button id="startLettersBtn" class="btn-primary" type="button">🔤 Ronda de Letras</button>
-        <button id="startNumbersBtn" class="btn-success" type="button">🔢 Ronda de Cifras</button>
+      <div>
+        <div class="muted" style="margin-bottom:4px;">Dificultad de la IA:</div>
+        <div id="difficultyGroup" class="grid-3">
+          <button class="btn-ghost" data-diff="facil" type="button">Fácil</button>
+          <button class="btn-ghost active" data-diff="normal" type="button">Normal</button>
+          <button class="btn-ghost" data-diff="dificil" type="button">Difícil</button>
+        </div>
       </div>
 
-      <div class="row">
-        <span class="muted">Tiempo actual: <strong id="menuTimeLabel">45 segundos</strong></span>
-        <button id="menuSwitchTimeBtn" class="btn-secondary" type="button">Cambiar a Sin tiempo (∞)</button>
+      <div>
+        <div class="muted" style="margin-bottom:4px;">Selección de letras:</div>
+        <div id="letterPickModeGroup" class="grid-2">
+          <button class="btn-ghost active" data-lmode="manual" type="button">Elegir Vocal / Consonante / Azar</button>
+          <button class="btn-ghost" data-lmode="random" type="button">Sacar 9 letras al azar</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="muted" style="margin-bottom:4px;">Selección de cifras:</div>
+        <div id="numPickModeGroup" class="grid-2">
+          <button class="btn-ghost active" data-nmode="manual" type="button">Elegir Grandes y Pequeños</button>
+          <button class="btn-ghost" data-nmode="random" type="button">Sacar 6 cifras al azar</button>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:4px;">
+        <button id="goLettersBtn" class="btn-primary" type="button">🔤 Prueba de Letras</button>
+        <button id="goNumbersBtn" class="btn-success" type="button">🔢 Prueba de Cifras</button>
       </div>
     </section>
 
     <!-- PRUEBA DE LETRAS -->
-    <section id="lettersView" class="card hidden">
-      <div class="row">
-        <strong>🔤 Prueba de Letras</strong>
-        <div class="row">
-          <button id="lettersHintBtn" class="btn-secondary" type="button">Vocal / Consonante</button>
-          <button id="lettersBackBtn" class="btn-secondary" type="button">Menú</button>
+    <section id="lettersSection" class="card hidden">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;">
+        <h3>🔤 Letras (<span id="letterCountLabel">0</span>/9)</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button id="pickVowelBtn" class="btn-ghost" type="button">+ Vocal</button>
+          <button id="pickConsBtn" class="btn-ghost" type="button">+ Consonante</button>
+          <button id="pickAutoLetterBtn" class="btn-ghost" type="button">+ Azar</button>
+          <button id="lettersMenuBtn" class="btn-ghost" type="button">Menú</button>
         </div>
       </div>
 
-      <div id="letterTiles" class="tiles-row"></div>
+      <div id="letterSlots" class="tiles-letters"></div>
 
-      <div class="word-preview">
-        <span id="currentWordDisplay">---</span>
-        <div class="row">
+      <div class="word-box">
+        <span id="wordPreviewText">---</span>
+        <div style="display:flex;gap:6px;">
           <button id="undoLetterBtn" class="btn-warn" type="button">Borrar</button>
-          <button id="clearWordBtn" class="btn-secondary" type="button">Limpiar</button>
+          <button id="clearWordBtn" class="btn-ghost" type="button">Limpiar</button>
         </div>
       </div>
 
-      <div id="lettersKeyboard" class="keyboard"></div>
+      <div id="letterKeys" class="keyboard"></div>
 
-      <div class="row">
-        <button id="submitWordBtn" class="btn-primary" type="button" style="flex:1;">Enviar palabra</button>
-        <button id="finishLettersRoundBtn" class="btn-success" type="button">Resolver ronda</button>
+      <div class="action-bar">
+        <button id="sendWordBtn" class="btn-primary" type="button">Enviar palabra</button>
+        <button id="solveLettersBtn" class="btn-success" type="button">Resolver ronda</button>
       </div>
 
       <div>
-        <div class="muted" style="margin-bottom:4px;">Palabras enviadas en esta ronda:</div>
-        <div id="submittedWordsList" class="chips-list">
-          <span class="muted">Ninguna enviada aún</span>
+        <div class="muted" style="margin-bottom:4px;">Palabras enviadas:</div>
+        <div id="sentWordsChips" class="chips">
+          <span class="muted">Aún no has enviado ninguna palabra</span>
         </div>
       </div>
 
-      <div id="lettersResult" class="result-box hidden"></div>
+      <div id="lettersResultBox" class="result-panel hidden"></div>
     </section>
 
     <!-- PRUEBA DE CIFRAS -->
-    <section id="numbersView" class="card hidden">
-      <div class="row">
-        <strong>🔢 Prueba de Cifras</strong>
-        <button id="numbersBackBtn" class="btn-secondary" type="button">Menú</button>
+    <section id="numbersSection" class="card hidden">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;">
+        <h3>🔢 Cifras (<span id="numCountLabel">0</span>/6)</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button id="pickBigNumBtn" class="btn-ghost" type="button">+ Grande</button>
+          <button id="pickSmallNumBtn" class="btn-ghost" type="button">+ Pequeño</button>
+          <button id="pickAutoNumBtn" class="btn-ghost" type="button">+ Azar</button>
+          <button id="numbersMenuBtn" class="btn-ghost" type="button">Menú</button>
+        </div>
       </div>
 
-      <div class="target-box">
-        <div class="muted">Objetivo a alcanzar</div>
-        <div id="targetNumberDisplay" class="target-num">000</div>
+      <div class="target-card">
+        <div class="muted">Número objetivo</div>
+        <div id="targetDisplay" class="target-value">---</div>
       </div>
 
-      <div id="numberTiles" class="num-tiles"></div>
+      <div id="numberSlots" class="tiles-numbers"></div>
 
-      <div class="ops-row">
+      <div class="ops-grid">
         <button class="op-btn" data-op="+" type="button">+</button>
         <button class="op-btn" data-op="-" type="button">−</button>
         <button class="op-btn" data-op="*" type="button">×</button>
@@ -521,609 +542,602 @@
       </div>
 
       <div class="expr-box">
-        <span id="exprDisplay">Toca fichas y operaciones</span>
-        <div class="row">
-          <button id="backspaceExprBtn" class="btn-warn" type="button">Atrás</button>
-          <button id="clearExprBtn" class="btn-secondary" type="button">Limpiar</button>
+        <span id="exprDisplayText">Elige cifras y operaciones</span>
+        <div style="display:flex;gap:6px;">
+          <button id="undoExprBtn" class="btn-warn" type="button">Atrás</button>
+          <button id="clearExprBtn" class="btn-ghost" type="button">Limpiar</button>
         </div>
       </div>
 
-      <div class="row">
-        <button id="saveCalcBtn" class="btn-primary" type="button" style="flex:1;">Guardar cálculo</button>
-        <button id="finishNumbersRoundBtn" class="btn-success" type="button">Resolver ronda</button>
+      <div class="action-bar">
+        <button id="sendCalcBtn" class="btn-primary" type="button">Enviar cálculo</button>
+        <button id="solveNumbersBtn" class="btn-success" type="button">Resolver ronda</button>
       </div>
 
       <div>
-        <div class="muted" style="margin-bottom:4px;">Cálculos guardados en esta ronda:</div>
-        <div id="savedCalcsList" class="chips-list">
-          <span class="muted">Ningún cálculo guardado aún</span>
+        <div class="muted" style="margin-bottom:4px;">Cálculos enviados:</div>
+        <div id="sentCalcsChips" class="chips">
+          <span class="muted">Aún no has enviado ningún cálculo</span>
         </div>
       </div>
 
-      <div id="numbersResult" class="result-box hidden"></div>
+      <div id="numbersResultBox" class="result-panel hidden"></div>
     </section>
-  </div>
+  </main>
 
   <script>
-    const ROUND_SECONDS = 45;
+    const SECONDS_LIMIT = 45;
     const VOWELS = ["A", "E", "I", "O", "U"];
     const CONSONANTS = [
       "B", "C", "D", "F", "G", "H", "J", "L", "M",
       "N", "Ñ", "P", "Q", "R", "S", "T", "V", "X", "Y", "Z"
     ];
-    const BIG_NUMBERS = [25, 50, 75, 100];
-    const SMALL_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+    const ABC = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+    const BIGS = [25, 50, 75, 100];
+    const SMALLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-    const AI_WORDS = [
-      "PARTIDO", "CALLE", "CAMINO", "TIEMPO", "CIUDAD", "MONTAÑA", "RIO",
-      "NOCHE", "ESTRELLAS", "LIBRO", "MESA", "SILLA", "PUERTA", "VENTANA",
-      "ARBOL", "FLORES", "AGUA", "FUEGO", "TIERRA", "VIENTO", "SOL", "LUNA",
-      "AMIGO", "FAMILIA", "TRABAJO", "JUEGO", "MUSICA", "HISTORIA", "VERDAD",
-      "CAMPO", "PLAYA", "COCHE", "TREN", "BARCO", "AVION", "CASA", "HOGAR",
-      "PAN", "LECHE", "QUESO", "FRUTA", "DULCE", "SABOR", "COCINA", "MESON",
-      "PLAZA", "TORRE", "PUENTE", "BOSQUE", "VALLE", "NIEVE", "LLUVIA", "BRISA"
-    ];
-
-    const state = {
-      view: "menu",
-      scoreYou: 0,
-      scoreAi: 0,
-      infiniteTime: false,
-      timeLeft: ROUND_SECONDS,
-      timerId: null,
-      roundEnded: false,
-
-      // Letras
-      letterTiles: [], // { id, char, usedOrder }
-      selectedTileIds: [],
-      submittedWords: [],
-
-      // Cifras
-      targetNumber: 0,
-      numberTiles: [], // { id, value, usedOrder }
-      exprTokens: [], // { type: 'num'|'op', tileId?, value, label }
-      savedCalcs: []
+    const WORD_BANK = {
+      facil: ["SOL", "MAR", "PAN", "LUZ", "MESA", "CASA", "FLOR", "RIO", "TREN", "LUNA"],
+      normal: ["CAMINO", "TIEMPO", "CIUDAD", "NOCHE", "ARBOL", "PLAYA", "LIBRO", "FUEGO", "CAMPO", "VERDAD"],
+      dificil: ["ESTRELLAS", "HISTORIA", "MONTAÑA", "PARTIDO", "TRABAJO", "FAMILIA", "UNIVERSO", "CAMINANTE", "ESPERANZA"]
     };
 
-    const $ = (id) => document.getElementById(id);
+    const app = {
+      screen: "menu",
+      difficulty: "normal",
+      letterPickMode: "manual",
+      numPickMode: "manual",
+      ptsYou: 0,
+      ptsAi: 0,
+      infinite: false,
+      seconds: SECONDS_LIMIT,
+      timer: null,
+      ended: false,
 
-    function updateTimeUI() {
-      const badge = $("timerBadge");
-      const btn = $("toggleTimeModeBtn");
-      const menuBtn = $("menuSwitchTimeBtn");
-      const menuLabel = $("menuTimeLabel");
+      // Letras
+      letters: [], // { id, char, order }
+      pickedLetterIds: [],
+      sentWords: [],
 
-      if (state.infiniteTime) {
-        badge.textContent = "♾️ ∞";
-        badge.classList.remove("danger");
-        btn.textContent = "Modo: Sin tiempo";
-        menuBtn.textContent = "Cambiar a 45 segundos";
-        menuLabel.textContent = "Sin tiempo (∞)";
+      // Cifras
+      target: 0,
+      numbers: [], // { id, val, order }
+      expr: [], // { kind: 'num'|'op', id?, val, text }
+      sentCalcs: []
+    };
+
+    const el = (id) => document.getElementById(id);
+    const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    function syncClockUI() {
+      const pill = el("timerPill");
+      const btn = el("timeModeBtn");
+      if (app.infinite) {
+        pill.textContent = "♾️ ∞";
+        pill.classList.remove("low");
+        btn.textContent = "Sin tiempo";
       } else {
-        badge.textContent = `⏱️ ${state.timeLeft}s`;
-        badge.classList.toggle("danger", state.timeLeft <= 10 && !state.roundEnded);
-        btn.textContent = "Modo: 45s";
-        menuBtn.textContent = "Cambiar a Sin tiempo (∞)";
-        menuLabel.textContent = "45 segundos";
+        pill.textContent = `⏱️ ${app.seconds}s`;
+        pill.classList.toggle("low", app.seconds <= 10 && !app.ended);
+        btn.textContent = "45s";
       }
     }
 
-    function stopTimer() {
-      if (state.timerId) {
-        clearInterval(state.timerId);
-        state.timerId = null;
+    function stopClock() {
+      if (app.timer) {
+        clearInterval(app.timer);
+        app.timer = null;
       }
     }
 
-    function startTimer() {
-      stopTimer();
-      state.timeLeft = ROUND_SECONDS;
-      updateTimeUI();
-      if (state.infiniteTime) return;
+    function startClock() {
+      stopClock();
+      app.seconds = SECONDS_LIMIT;
+      syncClockUI();
+      if (app.infinite) return;
 
-      state.timerId = setInterval(() => {
-        if (state.infiniteTime || state.roundEnded) return;
-        state.timeLeft -= 1;
-        updateTimeUI();
-        if (state.timeLeft <= 0) {
-          stopTimer();
-          if (state.view === "letters") resolveLettersRound(true);
-          if (state.view === "numbers") resolveNumbersRound(true);
+      app.timer = setInterval(() => {
+        if (app.infinite || app.ended) return;
+        app.seconds -= 1;
+        syncClockUI();
+        if (app.seconds <= 0) {
+          stopClock();
+          if (app.screen === "letters") finishLetters(true);
+          if (app.screen === "numbers") finishNumbers(true);
         }
       }, 1000);
     }
 
-    function toggleInfiniteMode() {
-      state.infiniteTime = !state.infiniteTime;
-      if (!state.infiniteTime && state.view !== "menu" && !state.roundEnded) {
-        if (state.timeLeft <= 0) state.timeLeft = ROUND_SECONDS;
-        startTimer();
-      } else if (state.infiniteTime) {
-        stopTimer();
+    function toggleTimeMode() {
+      app.infinite = !app.infinite;
+      if (!app.infinite && app.screen !== "menu" && !app.ended) {
+        if (app.seconds <= 0) app.seconds = SECONDS_LIMIT;
+        startClock();
+      } else if (app.infinite) {
+        stopClock();
       }
-      updateTimeUI();
+      syncClockUI();
     }
 
-    function showView(viewName) {
-      state.view = viewName;
-      $("menuView").classList.toggle("hidden", viewName !== "menu");
-      $("lettersView").classList.toggle("hidden", viewName !== "letters");
-      $("numbersView").classList.toggle("hidden", viewName !== "numbers");
-      if (viewName === "menu") {
-        stopTimer();
-        state.roundEnded = false;
-        updateTimeUI();
+    function setScreen(name) {
+      app.screen = name;
+      el("menuSection").classList.toggle("hidden", name !== "menu");
+      el("lettersSection").classList.toggle("hidden", name !== "letters");
+      el("numbersSection").classList.toggle("hidden", name !== "numbers");
+      if (name === "menu") {
+        stopClock();
+        app.ended = false;
+        syncClockUI();
       }
     }
 
-    function updateScoresUI() {
-      $("scoreYou").textContent = state.scoreYou;
-      $("scoreAi").textContent = state.scoreAi;
+    function syncScores() {
+      el("ptsYou").textContent = app.ptsYou;
+      el("ptsAi").textContent = app.ptsAi;
     }
 
-    function randomItem(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
+    // ---------- LETRAS ----------
+    function addLetter(type) {
+      if (app.ended || app.letters.length >= 9) return;
+      let ch;
+      if (type === "vowel") ch = rand(VOWELS);
+      else if (type === "cons") ch = rand(CONSONANTS);
+      else ch = Math.random() < 0.42 ? rand(VOWELS) : rand(CONSONANTS);
+
+      app.letters.push({
+        id: `lt_${app.letters.length}_${Math.random().toString(36).slice(2, 6)}`,
+        char: ch,
+        order: null
+      });
+      renderLetters();
     }
 
-    // ================= LETRAS =================
-    function generateLetterRack() {
-      const tiles = [];
-      for (let i = 0; i < 3; i++) {
-        tiles.push({ id: `L${i}`, char: randomItem(VOWELS), usedOrder: null });
+    function fillRandomLetters() {
+      while (app.letters.length < 9) {
+        addLetter("auto");
       }
-      for (let i = 3; i < 9; i++) {
-        tiles.push({ id: `L${i}`, char: randomItem(CONSONANTS), usedOrder: null });
-      }
-      // Mezclar ligeramente manteniendo equilibrio
-      for (let i = tiles.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-      }
-      tiles.forEach((t, idx) => { t.id = `L${idx}`; });
-      return tiles;
     }
 
-    function syncLetterOrder() {
-      state.letterTiles.forEach((t) => {
-        const pos = state.selectedTileIds.indexOf(t.id);
-        t.usedOrder = pos >= 0 ? pos + 1 : null;
+    function refreshLetterOrder() {
+      app.letters.forEach((item) => {
+        const idx = app.pickedLetterIds.indexOf(item.id);
+        item.order = idx >= 0 ? idx + 1 : null;
       });
     }
 
     function renderLetters() {
-      syncLetterOrder();
-      const container = $("letterTiles");
-      container.innerHTML = "";
+      refreshLetterOrder();
+      el("letterCountLabel").textContent = String(app.letters.length);
 
-      state.letterTiles.forEach((tile) => {
+      const slots = el("letterSlots");
+      slots.innerHTML = "";
+
+      for (let i = 0; i < 9; i++) {
+        const item = app.letters[i];
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "letter-tile" + (tile.usedOrder ? " used" : "");
-        btn.textContent = tile.char;
-        btn.disabled = state.roundEnded;
+        btn.className = "tile" + (item && item.order ? " selected" : "");
+        btn.textContent = item ? item.char : "·";
+        btn.disabled = !item || app.ended;
 
-        if (tile.usedOrder) {
+        if (item && item.order) {
           const badge = document.createElement("span");
-          badge.className = "order-tag";
-          badge.textContent = tile.usedOrder;
+          badge.className = "tile-badge";
+          badge.textContent = item.order;
           btn.appendChild(badge);
         }
 
-        btn.addEventListener("click", () => {
-          if (state.roundEnded) return;
-          const idx = state.selectedTileIds.indexOf(tile.id);
-          if (idx >= 0) {
-            state.selectedTileIds.splice(idx, 1);
-          } else {
-            state.selectedTileIds.push(tile.id);
-          }
-          renderLetters();
-        });
-
-        container.appendChild(btn);
-      });
-
-      const word = state.selectedTileIds
-        .map((id) => state.letterTiles.find((t) => t.id === id)?.char || "")
-        .join("");
-      $("currentWordDisplay").textContent = word || "---";
-
-      // Teclado con estado visual según disponibilidad y uso
-      const kb = $("lettersKeyboard");
-      kb.innerHTML = "";
-      const freeChars = new Set(
-        state.letterTiles.filter((t) => !t.usedOrder).map((t) => t.char)
-      );
-      const markedChars = new Set(
-        state.letterTiles.filter((t) => t.usedOrder).map((t) => t.char)
-      );
-
-      ALPHABET.forEach((ch) => {
-        const key = document.createElement("button");
-        key.type = "button";
-        key.textContent = ch;
-        key.className = "key-btn";
-        if (markedChars.has(ch) && !freeChars.has(ch)) {
-          key.classList.add("marked");
-        } else if (freeChars.has(ch)) {
-          key.classList.add("available");
+        if (item) {
+          btn.addEventListener("click", () => {
+            if (app.ended) return;
+            const pos = app.pickedLetterIds.indexOf(item.id);
+            if (pos >= 0) app.pickedLetterIds.splice(pos, 1);
+            else app.pickedLetterIds.push(item.id);
+            renderLetters();
+          });
         }
-        key.disabled = state.roundEnded || !freeChars.has(ch);
-        key.addEventListener("click", () => {
-          const freeTile = state.letterTiles.find((t) => t.char === ch && !t.usedOrder);
-          if (freeTile) {
-            state.selectedTileIds.push(freeTile.id);
+        slots.appendChild(btn);
+      }
+
+      const currentWord = app.pickedLetterIds
+        .map((id) => app.letters.find((x) => x.id === id)?.char || "")
+        .join("");
+      el("wordPreviewText").textContent = currentWord || "---";
+
+      const kb = el("letterKeys");
+      kb.innerHTML = "";
+      const freeSet = new Set(app.letters.filter((x) => !x.order).map((x) => x.char));
+      const pickedSet = new Set(app.letters.filter((x) => x.order).map((x) => x.char));
+
+      ABC.forEach((ch) => {
+        const k = document.createElement("button");
+        k.type = "button";
+        k.className = "key";
+        k.textContent = ch;
+        if (pickedSet.has(ch) && !freeSet.has(ch)) k.classList.add("all-used");
+        else if (freeSet.has(ch)) k.classList.add("can-pick");
+
+        k.disabled = app.ended || !freeSet.has(ch);
+        k.addEventListener("click", () => {
+          const candidate = app.letters.find((x) => x.char === ch && !x.order);
+          if (candidate) {
+            app.pickedLetterIds.push(candidate.id);
             renderLetters();
           }
         });
-        kb.appendChild(key);
+        kb.appendChild(k);
       });
 
-      // Palabras enviadas
-      const list = $("submittedWordsList");
-      list.innerHTML = "";
-      if (state.submittedWords.length === 0) {
-        list.innerHTML = '<span class="muted">Ninguna enviada aún</span>';
+      const chips = el("sentWordsChips");
+      chips.innerHTML = "";
+      if (!app.sentWords.length) {
+        chips.innerHTML = '<span class="muted">Aún no has enviado ninguna palabra</span>';
       } else {
-        state.submittedWords.forEach((w) => {
-          const chip = document.createElement("span");
-          chip.className = "chip";
-          chip.textContent = `${w} (${w.length} pts)`;
-          list.appendChild(chip);
+        app.sentWords.forEach((w) => {
+          const span = document.createElement("span");
+          span.className = "chip";
+          span.textContent = `${w} (${w.length} pts)`;
+          chips.appendChild(span);
         });
       }
     }
 
-    function canFormWordFromRack(word, rack) {
-      const pool = rack.map((t) => t.char);
-      for (const ch of word.toUpperCase()) {
-        const idx = pool.indexOf(ch);
+    function openLettersRound() {
+      app.ended = false;
+      app.letters = [];
+      app.pickedLetterIds = [];
+      app.sentWords = [];
+      el("lettersResultBox").classList.add("hidden");
+      el("lettersResultBox").innerHTML = "";
+      setScreen("letters");
+      if (app.letterPickMode === "random") {
+        fillRandomLetters();
+      }
+      renderLetters();
+      startClock();
+    }
+
+    function sendWord() {
+      if (app.ended) return;
+      const word = app.pickedLetterIds
+        .map((id) => app.letters.find((x) => x.id === id)?.char || "")
+        .join("")
+        .trim();
+      if (word.length < 2) return;
+      if (!app.sentWords.includes(word)) app.sentWords.push(word);
+      app.pickedLetterIds = [];
+      renderLetters();
+    }
+
+    function canBuildWord(word, poolItems) {
+      const avail = poolItems.map((x) => x.char);
+      for (const c of word) {
+        const idx = avail.indexOf(c);
         if (idx === -1) return false;
-        pool.splice(idx, 1);
+        avail.splice(idx, 1);
       }
       return true;
     }
 
-    function startLettersRound() {
-      state.roundEnded = false;
-      state.letterTiles = generateLetterRack();
-      state.selectedTileIds = [];
-      state.submittedWords = [];
-      $("lettersResult").classList.add("hidden");
-      $("lettersResult").innerHTML = "";
-      showView("letters");
+    function finishLetters(timeout = false) {
+      if (app.ended) return;
+      app.ended = true;
+      stopClock();
       renderLetters();
-      startTimer();
-    }
 
-    function submitWord() {
-      if (state.roundEnded) return;
-      const word = state.selectedTileIds
-        .map((id) => state.letterTiles.find((t) => t.id === id)?.char || "")
-        .join("")
-        .trim();
+      const bestYou = app.sentWords.reduce((a, b) => (b.length > a.length ? b : a), "");
+      const ptsYouRound = bestYou.length;
 
-      if (word.length < 2) return;
-      if (!state.submittedWords.includes(word)) {
-        state.submittedWords.push(word);
+      const bank = WORD_BANK[app.difficulty] || WORD_BANK.normal;
+      const matches = bank.filter((w) => canBuildWord(w, app.letters));
+      const aiWord = matches.length
+        ? matches.reduce((a, b) => (b.length > a.length ? b : a), "")
+        : app.letters.slice(0, Math.min(4, app.letters.length)).map((x) => x.char).join("");
+      const ptsAiRound = aiWord.length;
+
+      if (ptsYouRound > ptsAiRound) app.ptsYou += ptsYouRound;
+      else if (ptsAiRound > ptsYouRound) app.ptsAi += ptsAiRound;
+      else if (ptsYouRound > 0) {
+        app.ptsYou += ptsYouRound;
+        app.ptsAi += ptsAiRound;
       }
-      state.selectedTileIds = [];
-      renderLetters();
-    }
+      syncScores();
 
-    function resolveLettersRound(byTimeout = false) {
-      if (state.roundEnded) return;
-      state.roundEnded = true;
-      stopTimer();
-      renderLetters();
-
-      const bestPlayerWord = state.submittedWords.reduce(
-        (best, w) => (w.length > best.length ? w : best),
-        ""
-      );
-      const playerPts = bestPlayerWord.length;
-
-      const validAiWords = AI_WORDS.filter((w) => canFormWordFromRack(w, state.letterTiles));
-      const aiWord = validAiWords.length
-        ? validAiWords.reduce((a, b) => (b.length > a.length ? b : a), "")
-        : state.letterTiles.slice(0, 4).map((t) => t.char).join("");
-      const aiPts = aiWord.length;
-
-      if (playerPts > aiPts) {
-        state.scoreYou += playerPts;
-      } else if (aiPts > playerPts) {
-        state.scoreAi += aiPts;
-      } else if (playerPts > 0) {
-        state.scoreYou += playerPts;
-        state.scoreAi += aiPts;
-      }
-      updateScoresUI();
-
-      const box = $("lettersResult");
+      const box = el("lettersResultBox");
       box.classList.remove("hidden");
       box.innerHTML = `
-        <div><strong>${byTimeout ? "Tiempo agotado." : "Ronda resuelta."}</strong></div>
-        <div>Tu mejor palabra: <strong>${bestPlayerWord || "Ninguna"}</strong> (${playerPts} pts)</div>
-        <div>Palabra de la IA: <strong>${aiWord}</strong> (${aiPts} pts)</div>
-        <div style="margin-top:8px;">
-          <button id="nextLettersBtn" class="btn-primary" type="button">Nueva ronda de Letras</button>
-        </div>
+        <div><strong>${timeout ? "Tiempo terminado." : "Ronda resuelta."}</strong></div>
+        <div>Tu mejor palabra: <strong>${bestYou || "Ninguna"}</strong> (${ptsYouRound} pts)</div>
+        <div>Palabra de la IA (${app.difficulty}): <strong>${aiWord || "---"}</strong> (${ptsAiRound} pts)</div>
+        <div><button id="againLettersBtn" class="btn-primary" type="button">Otra ronda de Letras</button></div>
       `;
-      $("nextLettersBtn").addEventListener("click", startLettersRound);
+      el("againLettersBtn").addEventListener("click", openLettersRound);
     }
 
-    // ================= CIFRAS =================
-    function generateNumbersRound() {
-      const target = Math.floor(Math.random() * 899) + 101; // 101 - 999
-      const chosen = [];
-      const bigCount = Math.random() < 0.7 ? 2 : 1;
-      const bigPool = [...BIG_NUMBERS];
-      for (let i = 0; i < bigCount; i++) {
-        const idx = Math.floor(Math.random() * bigPool.length);
-        chosen.push(bigPool.splice(idx, 1)[0]);
+    // ---------- CIFRAS ----------
+    function addNumber(kind) {
+      if (app.ended || app.numbers.length >= 6) return;
+      let val;
+      if (kind === "big") {
+        const unusedBigs = BIGS.filter((b) => !app.numbers.some((n) => n.val === b));
+        val = unusedBigs.length ? rand(unusedBigs) : rand(SMALLS);
+      } else if (kind === "small") {
+        val = rand(SMALLS);
+      } else {
+        const bigCount = app.numbers.filter((n) => BIGS.includes(n.val)).length;
+        val = bigCount < 2 && Math.random() < 0.35 ? rand(BIGS) : rand(SMALLS);
       }
-      while (chosen.length < 6) {
-        chosen.push(randomItem(SMALL_NUMBERS));
-      }
-      return {
-        target,
-        tiles: chosen.map((val, idx) => ({ id: `N${idx}`, value: val, usedOrder: null }))
-      };
+
+      app.numbers.push({
+        id: `nm_${app.numbers.length}_${Math.random().toString(36).slice(2, 6)}`,
+        val,
+        order: null
+      });
+      renderNumbers();
     }
 
-    function syncNumberOrder() {
-      const usedIds = state.exprTokens.filter((tk) => tk.type === "num").map((tk) => tk.tileId);
-      state.numberTiles.forEach((t) => {
-        const pos = usedIds.indexOf(t.id);
-        t.usedOrder = pos >= 0 ? pos + 1 : null;
+    function fillRandomNumbers() {
+      while (app.numbers.length < 6) {
+        addNumber("auto");
+      }
+    }
+
+    function refreshNumberOrder() {
+      const usedIds = app.expr.filter((t) => t.kind === "num").map((t) => t.id);
+      app.numbers.forEach((item) => {
+        const idx = usedIds.indexOf(item.id);
+        item.order = idx >= 0 ? idx + 1 : null;
       });
     }
 
-    function evaluateExpr(tokens) {
+    function evalTokens(tokens) {
       if (!tokens.length) return null;
-      const raw = tokens.map((t) => (t.type === "num" ? String(t.value) : t.value)).join(" ");
+      const raw = tokens.map((t) => (t.kind === "num" ? String(t.val) : t.val)).join(" ");
       if (!/^[0-9+\-*/()\s]+$/.test(raw)) return null;
       try {
-        const val = Function(`"use strict"; return (${raw});`)();
-        if (typeof val !== "number" || !Number.isFinite(val) || !Number.isInteger(val) || val < 0) {
+        const res = Function(`"use strict"; return (${raw});`)();
+        if (typeof res !== "number" || !Number.isFinite(res) || !Number.isInteger(res) || res < 0) {
           return null;
         }
-        return val;
+        return res;
       } catch {
         return null;
       }
     }
 
     function renderNumbers() {
-      syncNumberOrder();
-      $("targetNumberDisplay").textContent = state.targetNumber;
+      refreshNumberOrder();
+      el("numCountLabel").textContent = String(app.numbers.length);
+      el("targetDisplay").textContent = String(app.target);
 
-      const grid = $("numberTiles");
-      grid.innerHTML = "";
-      state.numberTiles.forEach((tile) => {
+      const slots = el("numberSlots");
+      slots.innerHTML = "";
+
+      for (let i = 0; i < 6; i++) {
+        const item = app.numbers[i];
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "num-tile" + (tile.usedOrder ? " used" : "");
-        btn.textContent = tile.value;
-        btn.disabled = state.roundEnded || Boolean(tile.usedOrder);
+        btn.className = "tile" + (item && item.order ? " selected" : "");
+        btn.textContent = item ? String(item.val) : "·";
+        btn.disabled = !item || app.ended || Boolean(item.order);
 
-        if (tile.usedOrder) {
+        if (item && item.order) {
           const badge = document.createElement("span");
-          badge.className = "order-tag";
-          badge.textContent = tile.usedOrder;
+          badge.className = "tile-badge";
+          badge.textContent = item.order;
           btn.appendChild(badge);
         }
 
-        btn.addEventListener("click", () => {
-          if (state.roundEnded || tile.usedOrder) return;
-          state.exprTokens.push({
-            type: "num",
-            tileId: tile.id,
-            value: tile.value,
-            label: String(tile.value)
+        if (item) {
+          btn.addEventListener("click", () => {
+            if (app.ended || item.order) return;
+            app.expr.push({ kind: "num", id: item.id, val: item.val, text: String(item.val) });
+            renderNumbers();
           });
-          renderNumbers();
-        });
+        }
+        slots.appendChild(btn);
+      }
 
-        grid.appendChild(btn);
-      });
+      el("exprDisplayText").textContent = app.expr.length
+        ? app.expr.map((t) => t.text).join(" ")
+        : "Elige cifras y operaciones";
 
-      const exprText = state.exprTokens.length
-        ? state.exprTokens.map((t) => t.label).join(" ")
-        : "Toca fichas y operaciones";
-      $("exprDisplay").textContent = exprText;
-
-      const list = $("savedCalcsList");
-      list.innerHTML = "";
-      if (state.savedCalcs.length === 0) {
-        list.innerHTML = '<span class="muted">Ningún cálculo guardado aún</span>';
+      const chips = el("sentCalcsChips");
+      chips.innerHTML = "";
+      if (!app.sentCalcs.length) {
+        chips.innerHTML = '<span class="muted">Aún no has enviado ningún cálculo</span>';
       } else {
-        state.savedCalcs.forEach((c) => {
-          const chip = document.createElement("span");
-          chip.className = "chip";
-          chip.textContent = `${c.label} = ${c.result} (dif: ${c.diff})`;
-          list.appendChild(chip);
+        app.sentCalcs.forEach((c) => {
+          const span = document.createElement("span");
+          span.className = "chip";
+          span.textContent = `${c.text} = ${c.val} (dif: ${c.diff})`;
+          chips.appendChild(span);
         });
       }
     }
 
-    function startNumbersRound() {
-      state.roundEnded = false;
-      const round = generateNumbersRound();
-      state.targetNumber = round.target;
-      state.numberTiles = round.tiles;
-      state.exprTokens = [];
-      state.savedCalcs = [];
-      $("numbersResult").classList.add("hidden");
-      $("numbersResult").innerHTML = "";
-      showView("numbers");
+    function openNumbersRound() {
+      app.ended = false;
+      app.target = Math.floor(Math.random() * 899) + 101;
+      app.numbers = [];
+      app.expr = [];
+      app.sentCalcs = [];
+      el("numbersResultBox").classList.add("hidden");
+      el("numbersResultBox").innerHTML = "";
+      setScreen("numbers");
+      if (app.numPickMode === "random") {
+        fillRandomNumbers();
+      }
       renderNumbers();
-      startTimer();
+      startClock();
     }
 
-    function saveCalculation() {
-      if (state.roundEnded || !state.exprTokens.length) return;
-      const result = evaluateExpr(state.exprTokens);
-      if (result === null) return;
-      const diff = Math.abs(state.targetNumber - result);
-      const label = state.exprTokens.map((t) => t.label).join(" ");
-      state.savedCalcs.push({ label, result, diff });
-      state.exprTokens = [];
+    function sendCalc() {
+      if (app.ended || !app.expr.length) return;
+      const val = evalTokens(app.expr);
+      if (val === null) return;
+      const text = app.expr.map((t) => t.text).join(" ");
+      const diff = Math.abs(app.target - val);
+      app.sentCalcs.push({ text, val, diff });
+      app.expr = [];
       renderNumbers();
     }
 
-    function computeAiNumbersSolution(tiles, target) {
-      const vals = tiles.map((t) => t.value);
-      let best = { diff: Math.abs(target - vals[0]), expr: String(vals[0]), val: vals[0] };
+    function aiCalcEstimate(nums, target, diffMode) {
+      const pool = nums.map((n) => n.val);
+      if (!pool.length) return { text: "0", val: 0, diff: target };
 
-      for (let i = 0; i < vals.length; i++) {
-        const d0 = Math.abs(target - vals[i]);
-        if (d0 < best.diff) best = { diff: d0, expr: String(vals[i]), val: vals[i] };
-
-        for (let j = 0; j < vals.length; j++) {
+      let best = { diff: Math.abs(target - pool[0]), text: String(pool[0]), val: pool[0] };
+      for (let i = 0; i < pool.length; i++) {
+        for (let j = 0; j < pool.length; j++) {
           if (i === j) continue;
-          const ops = [
-            { sym: "+", v: vals[i] + vals[j] },
-            { sym: "-", v: vals[i] - vals[j] },
-            { sym: "*", v: vals[i] * vals[j] },
-            { sym: "/", v: vals[j] !== 0 && vals[i] % vals[j] === 0 ? vals[i] / vals[j] : null }
+          const combos = [
+            { sym: "+", v: pool[i] + pool[j] },
+            { sym: "-", v: pool[i] - pool[j] },
+            { sym: "*", v: pool[i] * pool[j] },
+            { sym: "/", v: pool[j] !== 0 && pool[i] % pool[j] === 0 ? pool[i] / pool[j] : null }
           ];
-          for (const o of ops) {
-            if (o.v === null || !Number.isInteger(o.v)) continue;
-            const d = Math.abs(target - o.v);
-            if (d < best.diff) {
-              best = { diff: d, expr: `${vals[i]} ${o.sym} ${vals[j]}`, val: o.v };
-            }
+          for (const c of combos) {
+            if (c.v === null || !Number.isInteger(c.v) || c.v < 0) continue;
+            const d = Math.abs(target - c.v);
+            if (d < best.diff) best = { diff: d, text: `${pool[i]} ${c.sym} ${pool[j]}`, val: c.v };
           }
         }
+      }
+
+      if (diffMode === "facil") {
+        best.diff += Math.floor(Math.random() * 25) + 10;
+      } else if (diffMode === "dificil" && best.diff > 5) {
+        best.diff = Math.max(0, best.diff - 5);
       }
       return best;
     }
 
-    function resolveNumbersRound(byTimeout = false) {
-      if (state.roundEnded) return;
-      state.roundEnded = true;
-      stopTimer();
+    function finishNumbers(timeout = false) {
+      if (app.ended) return;
+      app.ended = true;
+      stopClock();
 
-      if (state.exprTokens.length) {
-        const liveVal = evaluateExpr(state.exprTokens);
-        if (liveVal !== null) {
-          state.savedCalcs.push({
-            label: state.exprTokens.map((t) => t.label).join(" "),
-            result: liveVal,
-            diff: Math.abs(state.targetNumber - liveVal)
+      if (app.expr.length) {
+        const live = evalTokens(app.expr);
+        if (live !== null) {
+          app.sentCalcs.push({
+            text: app.expr.map((t) => t.text).join(" "),
+            val: live,
+            diff: Math.abs(app.target - live)
           });
-          state.exprTokens = [];
+          app.expr = [];
         }
       }
       renderNumbers();
 
-      const bestPlayer = state.savedCalcs.reduce(
-        (best, c) => (!best || c.diff < best.diff ? c : best),
-        null
-      );
-      const aiSol = computeAiNumbersSolution(state.numberTiles, state.targetNumber);
+      const bestYou = app.sentCalcs.reduce((a, b) => (!a || b.diff < a.diff ? b : a), null);
+      const aiSol = aiCalcEstimate(app.numbers, app.target, app.difficulty);
 
-      const playerDiff = bestPlayer ? bestPlayer.diff : Infinity;
-      if (playerDiff < aiSol.diff) {
-        state.scoreYou += playerDiff === 0 ? 10 : 7;
-      } else if (aiSol.diff < playerDiff) {
-        state.scoreAi += aiSol.diff === 0 ? 10 : 7;
-      } else if (bestPlayer) {
-        state.scoreYou += 5;
-        state.scoreAi += 5;
+      const dYou = bestYou ? bestYou.diff : Infinity;
+      if (dYou < aiSol.diff) app.ptsYou += dYou === 0 ? 10 : 7;
+      else if (aiSol.diff < dYou) app.ptsAi += aiSol.diff === 0 ? 10 : 7;
+      else if (bestYou) {
+        app.ptsYou += 5;
+        app.ptsAi += 5;
       }
-      updateScoresUI();
+      syncScores();
 
-      const box = $("numbersResult");
+      const box = el("numbersResultBox");
       box.classList.remove("hidden");
       box.innerHTML = `
-        <div><strong>${byTimeout ? "Tiempo agotado." : "Ronda resuelta."}</strong></div>
-        <div>Tu mejor cálculo: <strong>${bestPlayer ? `${bestPlayer.label} = ${bestPlayer.result} (dif: ${bestPlayer.diff})` : "Ninguno"}</strong></div>
-        <div>Aproximación IA: <strong>${aiSol.expr} = ${aiSol.val} (dif: ${aiSol.diff})</strong></div>
-        <div style="margin-top:8px;">
-          <button id="nextNumbersBtn" class="btn-success" type="button">Nueva ronda de Cifras</button>
-        </div>
+        <div><strong>${timeout ? "Tiempo terminado." : "Ronda resuelta."}</strong></div>
+        <div>Tu mejor cálculo: <strong>${bestYou ? `${bestYou.text} = ${bestYou.val} (dif: ${bestYou.diff})` : "Ninguno"}</strong></div>
+        <div>Aproximación IA (${app.difficulty}): <strong>${aiSol.text} = ${aiSol.val} (dif: ${aiSol.diff})</strong></div>
+        <div><button id="againNumbersBtn" class="btn-success" type="button">Otra ronda de Cifras</button></div>
       `;
-      $("nextNumbersBtn").addEventListener("click", startNumbersRound);
+      el("againNumbersBtn").addEventListener("click", openNumbersRound);
     }
 
-    // ================= EVENTOS =================
-    $("toggleTimeModeBtn").addEventListener("click", toggleInfiniteMode);
-    $("menuSwitchTimeBtn").addEventListener("click", toggleInfiniteMode);
-    $("timerBadge").addEventListener("dblclick", toggleInfiniteMode);
+    // ---------- EVENTOS ----------
+    el("timeModeBtn").addEventListener("click", toggleTimeMode);
+    el("timerPill").addEventListener("dblclick", toggleTimeMode);
 
-    $("resetScoreBtn").addEventListener("click", () => {
-      state.scoreYou = 0;
-      state.scoreAi = 0;
-      updateScoresUI();
+    el("resetScoreBtn").addEventListener("click", () => {
+      app.ptsYou = 0;
+      app.ptsAi = 0;
+      syncScores();
     });
 
-    $("startLettersBtn").addEventListener("click", startLettersRound);
-    $("startNumbersBtn").addEventListener("click", startNumbersRound);
-    $("lettersBackBtn").addEventListener("click", () => showView("menu"));
-    $("numbersBackBtn").addEventListener("click", () => showView("menu"));
+    document.querySelectorAll("#difficultyGroup button").forEach((b) => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll("#difficultyGroup button").forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        app.difficulty = b.dataset.diff;
+      });
+    });
 
-    $("lettersHintBtn").addEventListener("click", () => {
-      if (state.roundEnded || state.letterTiles.length < 9) return;
-      const replaceIdx = Math.floor(Math.random() * state.letterTiles.length);
-      const wantVowel = state.letterTiles.filter((t) => VOWELS.includes(t.char)).length < 3;
-      state.letterTiles[replaceIdx] = {
-        id: state.letterTiles[replaceIdx].id,
-        char: randomItem(wantVowel ? VOWELS : CONSONANTS),
-        usedOrder: null
-      };
-      state.selectedTileIds = [];
+    document.querySelectorAll("#letterPickModeGroup button").forEach((b) => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll("#letterPickModeGroup button").forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        app.letterPickMode = b.dataset.lmode;
+      });
+    });
+
+    document.querySelectorAll("#numPickModeGroup button").forEach((b) => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll("#numPickModeGroup button").forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        app.numPickMode = b.dataset.nmode;
+      });
+    });
+
+    el("goLettersBtn").addEventListener("click", openLettersRound);
+    el("goNumbersBtn").addEventListener("click", openNumbersRound);
+    el("lettersMenuBtn").addEventListener("click", () => setScreen("menu"));
+    el("numbersMenuBtn").addEventListener("click", () => setScreen("menu"));
+
+    el("pickVowelBtn").addEventListener("click", () => addLetter("vowel"));
+    el("pickConsBtn").addEventListener("click", () => addLetter("cons"));
+    el("pickAutoLetterBtn").addEventListener("click", () => addLetter("auto"));
+    el("undoLetterBtn").addEventListener("click", () => {
+      if (app.ended) return;
+      app.pickedLetterIds.pop();
       renderLetters();
     });
-
-    $("undoLetterBtn").addEventListener("click", () => {
-      if (state.roundEnded) return;
-      state.selectedTileIds.pop();
+    el("clearWordBtn").addEventListener("click", () => {
+      if (app.ended) return;
+      app.pickedLetterIds = [];
       renderLetters();
     });
+    el("sendWordBtn").addEventListener("click", sendWord);
+    el("solveLettersBtn").addEventListener("click", () => finishLetters(false));
 
-    $("clearWordBtn").addEventListener("click", () => {
-      if (state.roundEnded) return;
-      state.selectedTileIds = [];
-      renderLetters();
-    });
-
-    $("submitWordBtn").addEventListener("click", submitWord);
-    $("finishLettersRoundBtn").addEventListener("click", () => resolveLettersRound(false));
+    el("pickBigNumBtn").addEventListener("click", () => addNumber("big"));
+    el("pickSmallNumBtn").addEventListener("click", () => addNumber("small"));
+    el("pickAutoNumBtn").addEventListener("click", () => addNumber("auto"));
 
     document.querySelectorAll(".op-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (state.roundEnded) return;
-        const op = btn.dataset.op;
-        const symbolMap = { "+": "+", "-": "−", "*": "×", "/": "÷", "(": "(", ")": ")" };
-        state.exprTokens.push({
-          type: "op",
-          value: op,
-          label: symbolMap[op] || op
-        });
+        if (app.ended) return;
+        const raw = btn.dataset.op;
+        const map = { "+": "+", "-": "−", "*": "×", "/": "÷", "(": "(", ")": ")" };
+        app.expr.push({ kind: "op", val: raw, text: map[raw] || raw });
         renderNumbers();
       });
     });
 
-    $("backspaceExprBtn").addEventListener("click", () => {
-      if (state.roundEnded) return;
-      state.exprTokens.pop();
+    el("undoExprBtn").addEventListener("click", () => {
+      if (app.ended) return;
+      app.expr.pop();
       renderNumbers();
     });
-
-    $("clearExprBtn").addEventListener("click", () => {
-      if (state.roundEnded) return;
-      state.exprTokens = [];
+    el("clearExprBtn").addEventListener("click", () => {
+      if (app.ended) return;
+      app.expr = [];
       renderNumbers();
     });
+    el("sendCalcBtn").addEventListener("click", sendCalc);
+    el("solveNumbersBtn").addEventListener("click", () => finishNumbers(false));
 
-    $("saveCalcBtn").addEventListener("click", saveCalculation);
-    $("finishNumbersRoundBtn").addEventListener("click", () => resolveNumbersRound(false));
-
-    updateTimeUI();
-    updateScoresUI();
+    syncClockUI();
+    syncScores();
   </script>
 </body>
 </html>
